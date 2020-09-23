@@ -1,3 +1,30 @@
+<script>
+	import { stores } from '@sapper/app';
+	const { preloading, page, session } = stores();
+
+	import { onMount } from 'svelte'
+	let message
+	let ws
+	onMount(() => {
+		const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+		ws = new WebSocket(`${protocol}//${window.location.host}`);
+		ws.addEventListener('message', event => {
+			const data = JSON.parse(event.data);
+			console.log("Data:", data)
+		});
+	})
+
+	function send() {
+		ws.send(JSON.stringify({
+			action: 'message',
+			content: message
+		}))
+		message = ''
+	}
+</script>
+
+
+
 <style>
 	h1, figure, p {
 		text-align: center;
@@ -37,6 +64,13 @@
 </svelte:head>
 
 <h1>Great success!</h1>
+
+<pre>{JSON.stringify($session)}</pre>
+
+{#if ws}
+	<textarea bind:value={message} on:enter={send}></textarea>
+	<button on:click={send}>Send</button>
+{/if}
 
 <figure>
 	<img alt='Success Kid' src='successkid.jpg'>
