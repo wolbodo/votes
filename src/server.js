@@ -24,7 +24,8 @@ const app = polka({ server }) // You can also use Express
 		sirv('static', { dev }),
 		sapper.middleware({
 			session: (req) => ({
-				id: req.session.id
+				id: req.session.id,
+				data: req.session.data
 			})
 		})
 	)
@@ -36,11 +37,11 @@ const clients = []
 
 wss.on('connection', function connection(ws, request, client) {
 	clients.push(ws)
-  ws.on('message', function message(msg) {
-	console.log(`Received message ${msg} from user ${client}`, request.session.id);
-	
-	clients.map(client => client.send(JSON.stringify({ msg: `We just got a message: ${msg}`})))
-  });
+	ws.on('message', function message(msg) {
+		console.log(`Received message ${msg} from user ${client}`, request.session.id);
+		
+		clients.map(client => client.send(JSON.stringify({ msg: `We just got a message: ${msg}`})))
+	});
 });
 
 

@@ -21,7 +21,89 @@
 		}))
 		message = ''
 	}
+
+	let name = ''
+	let email = ''
+
+	async function createMeeting() {
+		try {
+			const response = fetch('/create', {
+				method: 'post',
+				data: JSON.stringify({
+					name, email
+				})
+			})
+			const { meetingId } = await response.json()
+		} catch (e) {
+			console.error("Error creating meeting", e)
+		}
+	}
 </script>
+
+
+<svelte:head>
+	<title>Meetings</title>
+</svelte:head>
+
+<h1>Welcome!</h1>
+
+<form on:submit|preventDefault={createMeeting}>
+	<label for='name'>Name</label>
+	<input id='name' bind:value={name} />
+
+	<label for='email'>Email</label>
+	<input id='email' type='email' bind:value={email} />
+
+	<button on:click={createMeeting}>Start meeting</button>
+</form>
+
+
+<h2>Functionality</h2>
+<ul>
+	<li>
+		<h3>Meeting management</h3>
+		<ul>
+			<li>Admin creates a new meeting</li>
+			<li>People can go to unique meeting link</li>
+			<li>People fill in their details (name, email)</li>
+			<li>Admin allows people in</li>
+			<li>Admin removes people</li>
+		</ul>
+	</li>
+	<li>
+		<h3>Admin creates a vote</h3>
+		<ul>
+			<li>People can vote</li>
+			<li>When all people voted, vote closes</li>
+			<li>Or, when admin closes vote</li>
+			<li>Who voted will be streamed to everyone</li>
+			<li>When vote is closed, results will be distributed.</li>
+		</ul>
+	</li>
+</ul>
+
+<h2>Screens</h2>
+<ul>
+	<li>Welcome</li>
+	<li>Create user</li>
+	<li>[user] Meeting overview</li>
+	<li>[admin] Meeting overview</li>
+	<li>[admin] Vote creation</li>
+	<li>[user] Vote screen</li>
+</ul>
+
+
+<pre>{JSON.stringify($session)}</pre>
+
+{#if ws}
+	<textarea bind:value={message} on:enter={send}></textarea>
+	<button on:click={send}>Send</button>
+{/if}
+
+<figure>
+	<img alt='Success Kid' src='successkid.jpg'>
+	<figcaption>Have fun with Sapper!</figcaption>
+</figure>
 
 
 
@@ -58,23 +140,3 @@
 		}
 	}
 </style>
-
-<svelte:head>
-	<title>Sapper project template</title>
-</svelte:head>
-
-<h1>Great success!</h1>
-
-<pre>{JSON.stringify($session)}</pre>
-
-{#if ws}
-	<textarea bind:value={message} on:enter={send}></textarea>
-	<button on:click={send}>Send</button>
-{/if}
-
-<figure>
-	<img alt='Success Kid' src='successkid.jpg'>
-	<figcaption>Have fun with Sapper!</figcaption>
-</figure>
-
-<p><strong>Try editing this file (src/routes/index.svelte) to test live reloading.</strong></p>
