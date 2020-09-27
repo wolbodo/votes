@@ -838,6 +838,11 @@
     lodash "^4.17.19"
     to-fast-properties "^2.0.0"
 
+"@polka/parse@^1.0.0-next.8":
+  version "1.0.0-next.8"
+  resolved "https://registry.yarnpkg.com/@polka/parse/-/parse-1.0.0-next.8.tgz#0a4e54b1ebceb3be51d01fd07ac784b017437221"
+  integrity sha512-RHakc/UZLtw4qR9T/59nLtn6qVrAPYqj0BuH2unbPwbYWd3MTWfFWu/1iUWIalyobuVD5rMWndpDKrvUjJ6ieQ==
+
 "@polka/url@^1.0.0-next.11", "@polka/url@^1.0.0-next.9":
   version "1.0.0-next.11"
   resolved "https://registry.yarnpkg.com/@polka/url/-/url-1.0.0-next.11.tgz#aeb16f50649a91af79dbe36574b66d0f9e4d9f71"

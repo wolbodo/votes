@@ -1,8 +1,6 @@
 <script>
-	import { stores, goto } from '@sapper/app';
+	import { goto } from '@sapper/app';
 
-    const { session } = stores();
-    
     let creating = false
 
 	let name = 'Dexter'
@@ -13,7 +11,10 @@
             creating = true
             const response = await fetch('/create', {
                 method: 'post',
-                data: JSON.stringify({
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
                     name, email
                 })
             })
@@ -21,7 +22,7 @@
                 throw new Error("Could not create assembly")
             }
             const { assemblyId } = await response.json()
-            goto(`/m-${assemblyId}`)
+            goto(`/a-${assemblyId}`)
         } catch (e) {
             throw e
         } finally {
@@ -39,10 +40,10 @@
 
 <form on:submit|preventDefault={createAssembly} disabled={creating}>
 	<label for='name'>Name</label>
-	<input id='name' bind:value={name} />
+	<input required id='name' bind:value={name} />
 
 	<label for='email'>Email</label>
-	<input id='email' type='email' bind:value={email} />
+	<input required id='email' type='email' bind:value={email} />
 
 	<button>Start assembly</button>
 </form>

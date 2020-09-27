@@ -1,15 +1,16 @@
 import http from 'http'
-import sirv from 'sirv';
-import polka from 'polka';
-import compression from 'compression';
-import * as sapper from '@sapper/server';
+import sirv from 'sirv'
+import polka from 'polka'
+import compression from 'compression'
+import * as sapper from '@sapper/server'
+import { json } from '@polka/parse'
 import WebSocket from 'ws'
 import session from 'express-session'
 
 import Assembly from './assembly.js'
 
-const { PORT, NODE_ENV } = process.env;
-const dev = NODE_ENV === 'development';
+const { PORT, NODE_ENV } = process.env
+const dev = NODE_ENV === 'development'
 
 const sessionParser = session({
 	secret: 'keyboard cat',
@@ -20,6 +21,7 @@ const sessionParser = session({
 
 const server = http.createServer()
 const app = polka({ server }) // You can also use Express
+	.use(json())
   	.use(sessionParser)
 	.use(
 		compression({ threshold: 0 }),
@@ -32,28 +34,44 @@ const app = polka({ server }) // You can also use Express
 		})
 	)
 
-const wss = new WebSocket.Server({ noServer: true });
+const wss = new WebSocket.Server({ noServer: true })
 
 wss.on('connection', function connection(ws, request, client) {
-	const assembly = Assembly.getAssemblyByClientId(request.session.id)
-	assembly.join(request.session.id, ws)
-
+	
 	ws.on('message', msg => {
-		console.log(`Received message ${msg} from user ${request.session.id}`);
+		console.log(`Received message ${msg} from user ${request.session.id}`)
 		
-
 		const { data, type } = JSON.parse(msg)
-
 		switch (type) {
 			case 'join':
+				const assembly = Assembly.getAssemblyByClientId(request.session.id)
+				console.log("Join on", assembly)
+				if (!assembly) {
+					ws.send(JSON.stringify({ type: 'requestIdentity' }))
+				} else {
+					assembly.joinSocket(request.session.id, ws)
+				}
 				return
 			default:
 				console.warn("Unused message received")
 		}
-		
-		clients.map(client => client.send(JSON.stringify({ msg: `We just got a message: ${msg}`})))
-	});
-});
+	})
+
+	ws.on('close', () => {
+		const assembly = Assembly.getAssemblyByClientId(request.session.id)
+		if (assembly) {
+			console.log(`Close: ${assembly.sessions.get(request.session.id).identity.name} closed socket`)
+			assembly.updateClients()
+		}
+	})
+	ws.on('error', () => {
+		const assembly = Assembly.getAssemblyByClientId(request.session.id)
+		if (assembly) {
+			console.log(`Error: ${assembly.sessions.get(request.session.id).identity.name} closed socket`)
+			assembly.updateClients()
+		}
+	})
+})
 
 
 server.on('upgrade', function upgrade(request, socket, head) {
@@ -62,17 +80,17 @@ server.on('upgrade', function upgrade(request, socket, head) {
 	const assemblyId = request.url.replace('/', '')
     if (!Assembly.byId(assemblyId)) {
 		console.log("Could not find assembly", assemblyId, Assembly.assemblies)
-      socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
-      socket.destroy();
-      return;
+      socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
+      socket.destroy()
+      return
     }
 
     wss.handleUpgrade(request, socket, head, function (ws) {
-      wss.emit('connection', ws, request);
-    });
-  });
-});
+      wss.emit('connection', ws, request)
+    })
+  })
+})
 
 app.listen(PORT, err => {
-	if (err) console.log('error', err);
-});
+	if (err) console.log('error', err)
+})

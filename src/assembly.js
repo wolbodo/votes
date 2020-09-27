@@ -30,16 +30,54 @@ export default class Assembly {
 
     constructor(id) {
         this.id = id
-        this.admins = new Set()
         this.sessions = new Map()
     }
 
-    join(clientId, connection) {
-        this.sessions.set(clientId, connection)
+    join(clientId, identity) {
+        console.log("Got id:", identity)
+        this.sessions.set(clientId, {
+            identity
+        })
         Assembly.clientAssemblies.set(clientId, this)
+        this.updateClients()
+    }
+    joinSocket(clientId, socket) {
+        const session = this.sessions.get(clientId)
+        this.sessions.set(clientId, {
+            ...session,
+            socket
+        })
+        this.updateClients()
     }
     
-    setAdmin(clientId) {
-        this.admins.add(clientId)
+    setAdmin(clientId, isAdmin = true) {
+        const session = this.sessions.get(clientId)
+        
+        this.sessions.set(clientId, {
+            ...session,
+            isAdmin
+        })
+        this.updateClients()
+    }
+
+    updateClients() {
+        if (!this.__willUpdateClients) {
+            this.__willUpdateClients = setTimeout(() => {
+                const sessions = [...this.sessions.values()]
+                const clients = sessions.map(({ identity, socket }) => ({
+                    name: identity.name,
+                    socket: socket && socket.readyState
+                }))
+                const msg = JSON.stringify({
+                    type: 'clientList',
+                    data: clients
+                })
+                sessions
+                    .filter(({ socket }) => !!socket)
+                    .forEach(({ socket }) => socket.send(msg))
+
+                delete this.__willUpdateClients
+            }, 10)
+        }
     }
 }
