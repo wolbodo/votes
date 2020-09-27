@@ -15,7 +15,7 @@
 <main>
 	<ul>
 		<li><a href='/logout'>Logout</a></li>
-		<li><a href='/create'>Create meeting</a></li>
+		<li><a href='/create'>Create assembly</a></li>
 	</ul>
 	<slot></slot>
 </main>

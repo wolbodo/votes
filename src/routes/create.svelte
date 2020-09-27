@@ -8,7 +8,7 @@
 	let name = 'Dexter'
 	let email = 'dexter@dxlb.nl'
 
-	async function createMeeting() {
+	async function createAssembly() {
         try {
             creating = true
             const response = await fetch('/create', {
@@ -18,10 +18,10 @@
                 })
             })
             if (response.status !== 201) {
-                throw new Error("Could not create meeting")
+                throw new Error("Could not create assembly")
             }
-            const { meetingId } = await response.json()
-            goto(`/m-${meetingId}`)
+            const { assemblyId } = await response.json()
+            goto(`/m-${assemblyId}`)
         } catch (e) {
             throw e
         } finally {
@@ -32,19 +32,19 @@
 
 
 <svelte:head>
-	<title>Meetings|create</title>
+	<title>Assemblies|create</title>
 </svelte:head>
 
-<h1>Welcome, create a new meeting!</h1>
+<h1>Welcome, create a new assembly!</h1>
 
-<form on:submit|preventDefault={createMeeting} disabled={creating}>
+<form on:submit|preventDefault={createAssembly} disabled={creating}>
 	<label for='name'>Name</label>
 	<input id='name' bind:value={name} />
 
 	<label for='email'>Email</label>
 	<input id='email' type='email' bind:value={email} />
 
-	<button on:click={createMeeting}>Start meeting</button>
+	<button>Start assembly</button>
 </form>
 
 <style>
