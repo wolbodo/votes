@@ -3,11 +3,13 @@
     const { page } = stores();
 
     let posting = false
-	let name
+    let name
+    let error
 
 	async function identify() {
         try {
             posting = true
+            error = null
             const assemblyId = $page.params.assemblyId
             const response = await fetch('/join', {
                 method: 'post',
@@ -24,6 +26,7 @@
             }
             goto(`/a-${assemblyId}`)
         } catch (e) {
+            error = e.message
             throw e
         } finally {
             posting = false
@@ -42,6 +45,7 @@
 	<label for='name'>Name</label>
 	<input required id='name' bind:value={name} />
 
+    {#if error} {error} {/if}
 	<button>Join</button>
 </form>
 

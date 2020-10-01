@@ -36,39 +36,70 @@ const app = polka({ server }) // You can also use Express
 
 const wss = new WebSocket.Server({ noServer: true })
 
-wss.on('connection', function connection(ws, request, client) {
+const isAdmin = (func) => ({ assembly, sessionId, ...rest }) => {
+	const session = assembly.sessions.get(sessionId)
+	if (session.inLobby && session.isAdmin) {
+		return func({ assembly, sessionId, ...rest })
+	}
+}
+const protocol = {
+	join({ assembly, sessionId, ws }) {
+		console.log("Join on", assembly)
+		assembly.joinSocket(sessionId, ws)
+	},
+	setAdmin: isAdmin(({ assembly, data: { name, isAdmin = true } }) => {
+		const targetId = assembly.getSessionIdByName(name)
+		assembly.updateSession(targetId, { isAdmin })
+	}),
+	setLobby: isAdmin(({ assembly, data: { name, inLobby } }) => {
+		const targetId = assembly.getSessionIdByName(name)
+		if (!inLobby) {
+			assembly.removeSession(targetId)
+		} else {
+			assembly.updateSession(targetId, { inLobby })
+		}
+	}),
+	setPollInfo: isAdmin(({ assembly, data }) => {
+		assembly.setPollInfo(data)
+	}),
+	addPollOption: isAdmin(({ assembly, data: { option } }) => {
+		assembly.addPollOption(option)
+	}),
+	removePollOption: isAdmin(({ assembly, data: { option } }) => {
+		assembly.removePollOption(option)
+	}),
+}
+
+
+wss.on('connection', function connection(ws, request) {
+	const sessionId = request.session.id
 	
 	ws.on('message', msg => {
-		console.log(`Received message ${msg} from user ${request.session.id}`)
+		const assembly = Assembly.getAssemblyByClientId(sessionId)
+		console.log(`Received message ${msg} from user ${sessionId}`, !!assembly)
 		
-		const { data, type } = JSON.parse(msg)
-		switch (type) {
-			case 'join':
-				const assembly = Assembly.getAssemblyByClientId(request.session.id)
-				console.log("Join on", assembly)
-				if (!assembly) {
-					ws.send(JSON.stringify({ type: 'requestIdentity' }))
-				} else {
-					assembly.joinSocket(request.session.id, ws)
-				}
-				return
-			default:
-				console.warn("Unused message received")
+		if (!assembly) {
+			ws.send(JSON.stringify({ type: 'requestIdentity' }))
+			return
 		}
+		const { data, type } = JSON.parse(msg)
+		const action = protocol[type] || (() => console.warn("Unknown message received", type))
+
+		action({ type, assembly, sessionId, ws, data })
 	})
 
 	ws.on('close', () => {
-		const assembly = Assembly.getAssemblyByClientId(request.session.id)
+		const assembly = Assembly.getAssemblyByClientId(sessionId)
 		if (assembly) {
-			console.log(`Close: ${assembly.sessions.get(request.session.id).identity.name} closed socket`)
-			assembly.updateClients()
+			console.log(`Close: ${assembly.sessions.get(sessionId).identity.name} closed socket`)
+			assembly.sendClientList()
 		}
 	})
 	ws.on('error', () => {
-		const assembly = Assembly.getAssemblyByClientId(request.session.id)
+		const assembly = Assembly.getAssemblyByClientId(sessionId)
 		if (assembly) {
-			console.log(`Error: ${assembly.sessions.get(request.session.id).identity.name} closed socket`)
-			assembly.updateClients()
+			console.log(`Error: ${assembly.sessions.get(sessionId).identity.name} closed socket`)
+			assembly.sendClientList()
 		}
 	})
 })

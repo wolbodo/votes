@@ -31,6 +31,8 @@ export default class Assembly {
     constructor(id) {
         this.id = id
         this.sessions = new Map()
+
+        this.nextPoll = {}
     }
 
     join(clientId, identity) {
@@ -39,7 +41,8 @@ export default class Assembly {
             identity
         })
         Assembly.clientAssemblies.set(clientId, this)
-        this.updateClients()
+        this.sendClientList()
+        this.sendClientInfo(clientId)
     }
     joinSocket(clientId, socket) {
         const session = this.sessions.get(clientId)
@@ -47,36 +50,100 @@ export default class Assembly {
             ...session,
             socket
         })
-        this.updateClients()
+        this.sendClientList()
+        this.sendClientInfo(clientId)
     }
     
-    setAdmin(clientId, isAdmin = true) {
+    // Poll mgmt
+    setPollInfo({ subject }) {
+        this.nextPoll = { ... this.nextPoll, subject }
+        this.sendPollInfo()
+    }
+
+    addPollOption(option) {
+        this.nextPoll = {
+            ...this.nextPoll,
+            options: [...new Set([ ...this.nextPoll.options || [], option ])]
+        }
+        this.sendPollInfo()
+    }
+    removePollOption(option) {
+        this.nextPoll = {
+            ...this.nextPoll,
+            options: this.nextPoll.options.filter(opt => opt !== option)
+        }
+        this.sendPollInfo()   
+    }
+
+    updateSession(clientId, update) {
         const session = this.sessions.get(clientId)
         
         this.sessions.set(clientId, {
             ...session,
-            isAdmin
+            ...update
         })
-        this.updateClients()
+        this.sendClientInfo(clientId)
+        this.sendClientList()
+        this.sendPollInfo()
+    }
+    removeSession(clientId) {
+        this.sessions.delete(clientId)
+        this.sendClientList()
+    }
+    getSessionIdByName(name) {
+        // Check whether name already in the session
+        const iname = name.toLowerCase().replace(' ', '')
+        const result = [...this.sessions.entries()]
+            .find(([sessionId, { identity }]) => identity.name.toLowerCase().replace(' ', '') === iname)
+        return result ? result[0] : undefined
     }
 
-    updateClients() {
+    sendAll(msg, filter = () => true) {
+        [...this.sessions.values()]
+            .filter(session => !!session.socket && session.inLobby && filter(session))
+            .forEach(({ socket }) => socket.send(msg))
+    }
+
+    sendClientList() {
         if (!this.__willUpdateClients) {
             this.__willUpdateClients = setTimeout(() => {
                 const sessions = [...this.sessions.values()]
-                const clients = sessions.map(({ identity, socket }) => ({
+                const clients = sessions.map(({ identity, socket, ...rest }) => ({
                     name: identity.name,
-                    socket: socket && socket.readyState
+                    socket: socket && socket.readyState,
+                    ...rest
                 }))
                 const msg = JSON.stringify({
                     type: 'clientList',
                     data: clients
                 })
-                sessions
-                    .filter(({ socket }) => !!socket)
-                    .forEach(({ socket }) => socket.send(msg))
-
+                this.sendAll(msg)
                 delete this.__willUpdateClients
+            }, 10)
+        }
+    }
+    sendClientInfo(clientId) {
+        const { socket, identity, ...rest} = this.sessions.get(clientId)
+        if (!socket) return
+
+        const msg = JSON.stringify({
+            type: 'clientInfo',
+            data: {
+                name: identity.name,
+                ...rest
+            }
+        })
+        socket.send(msg)
+    }
+    sendPollInfo() {
+        if (!this.__willSendPollInfo) {
+            this.__willSendPollInfo = setTimeout(() => {
+                const msg = JSON.stringify({
+                    type: 'pollInfo',
+                    data: this.nextPoll
+                })
+                this.sendAll(msg)
+                delete this.__willSendPollInfo
             }, 10)
         }
     }
