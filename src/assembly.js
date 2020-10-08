@@ -74,6 +74,11 @@ export default class Assembly {
         }
         this.sendPollInfo()   
     }
+    startPoll() {
+        this.currentPoll = this.nextPoll
+        this.nextPoll = null
+        this.sendPollInfo()
+    }
 
     updateSession(clientId, update) {
         const session = this.sessions.get(clientId)
@@ -87,8 +92,14 @@ export default class Assembly {
         this.sendPollInfo()
     }
     removeSession(clientId) {
+        const { socket } = this.sessions.get(clientId)
         this.sessions.delete(clientId)
+        Assembly.clientAssemblies.delete(clientId)
         this.sendClientList()
+
+        socket.send(JSON.stringify({
+            type: 'kicked'
+        }))
     }
     getSessionIdByName(name) {
         // Check whether name already in the session
@@ -140,7 +151,11 @@ export default class Assembly {
             this.__willSendPollInfo = setTimeout(() => {
                 const msg = JSON.stringify({
                     type: 'pollInfo',
-                    data: this.nextPoll
+                    data: {
+                        next: this.nextPoll,
+                        current: this.currentPoll,
+                        previous: this.polls
+                    }
                 })
                 this.sendAll(msg)
                 delete this.__willSendPollInfo

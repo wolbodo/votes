@@ -20,10 +20,14 @@
             clientList = data
         },
         pollInfo({ data }) {
-            pollInfo = data
+            console.log("Got pollInfo:", data)
+            pollInfo = data.next
         },
         requestIdentity() {
             goto(`a-${assemblyId}/hello`)
+        },
+        kicked() {
+            goto('/kicked')
         }
     }
 	onMount(() => {

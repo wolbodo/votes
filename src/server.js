@@ -42,6 +42,11 @@ const isAdmin = (func) => ({ assembly, sessionId, ...rest }) => {
 		return func({ assembly, sessionId, ...rest })
 	}
 }
+const pollStarted = (func) => ({ assembly, ...rest}) => {
+	if (assembly.currentPoll) {
+		return func({ assembly, ...rest })
+	}
+}
 const protocol = {
 	join({ assembly, sessionId, ws }) {
 		console.log("Join on", assembly)
@@ -60,6 +65,7 @@ const protocol = {
 		}
 	}),
 	setPollInfo: isAdmin(({ assembly, data }) => {
+		console.log("SEtting pollInfo", data)
 		assembly.setPollInfo(data)
 	}),
 	addPollOption: isAdmin(({ assembly, data: { option } }) => {
@@ -68,6 +74,9 @@ const protocol = {
 	removePollOption: isAdmin(({ assembly, data: { option } }) => {
 		assembly.removePollOption(option)
 	}),
+	startPoll: isAdmin(({ assembly }) => assembly.startPoll()),
+	sendVote: pollStarted(({ assembly, sessionId, vote }) => {}),
+	endPoll: isAdmin(({ }) => {})
 }
 
 
@@ -91,14 +100,24 @@ wss.on('connection', function connection(ws, request) {
 	ws.on('close', () => {
 		const assembly = Assembly.getAssemblyByClientId(sessionId)
 		if (assembly) {
-			console.log(`Close: ${assembly.sessions.get(sessionId).identity.name} closed socket`)
+			const session = assembly.sessions.get(sessionId)
+			if (!session) {
+				console.log(`Close: 'unknown' closed socket`)
+			} else {
+				console.log(`Close: '${session.identity.name}' closed socket`)
+			}
 			assembly.sendClientList()
 		}
 	})
 	ws.on('error', () => {
 		const assembly = Assembly.getAssemblyByClientId(sessionId)
 		if (assembly) {
-			console.log(`Error: ${assembly.sessions.get(sessionId).identity.name} closed socket`)
+			const session = assembly.sessions.get(sessionId)
+			if (!session) {
+				console.log(`Error: 'unknown' closed socket`)
+			} else {
+				console.log(`Error: '${session.identity.name}' closed socket`)
+			}
 			assembly.sendClientList()
 		}
 	})
@@ -108,9 +127,9 @@ wss.on('connection', function connection(ws, request) {
 server.on('upgrade', function upgrade(request, socket, head) {
   // This function is not defined on purpose. Implement it with your own logic.
   sessionParser(request, {}, () => {
-	const assemblyId = request.url.replace('/', '')
+		const assemblyId = request.url.replace('/', '')
     if (!Assembly.byId(assemblyId)) {
-		console.log("Could not find assembly", assemblyId, Assembly.assemblies)
+			console.log("Could not find assembly", assemblyId, Assembly.assemblies)
       socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
       socket.destroy()
       return
