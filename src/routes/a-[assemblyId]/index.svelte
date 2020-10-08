@@ -27,7 +27,7 @@
             assemblyState = state
         },
         requestIdentity() {
-            goto(`a-${assemblyId}/hello`)
+            goto(`a-${assemblyId}/welcome`)
         },
         kicked() {
             goto('/kicked')
@@ -120,14 +120,14 @@
 
     
     {#if inLobby}
-        <h2>Upcoming vote</h2>
+        <h2>Upcoming poll</h2>
         {#if isAdmin}
             <form on:submit|preventDefault={() => {
                 send('setPollInfo', { subject: pollSubject })
                 pollSubject = ''
             }}>
-                <label for="voteSubject">Subject</label>
-                <input required id="voteSubject" bind:value={pollSubject} />
+                <label for="pollSubject">Subject</label>
+                <input required id="pollSubject" bind:value={pollSubject} />
 
                 <button>Set subject</button>
             </form>
@@ -165,8 +165,8 @@
             <p>Is still being drafted</p>
         {/if}
     {:else if isPolling}
-        <form on:submit|preventDefault={() => send('vote', { choice })}>
-            <h2>Current vote: {pollInfo.subject}</h2>
+        <form on:submit|preventDefault={() => send('castpoll', { choice })}>
+            <h2>Current poll: {pollInfo.subject}</h2>
             
             {#each pollInfo.options as option}
                 <p>
@@ -175,8 +175,8 @@
                 </p>
             {/each}
 
-            <button on:click|preventDefault={() => choice = null}>Clear vote</button>
-            <button>Cast vote</button>
+            <button on:click|preventDefault={() => choice = null}>Clear poll</button>
+            <button>Cast poll</button>
         </form>
     {/if}
 

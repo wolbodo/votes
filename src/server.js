@@ -75,7 +75,7 @@ const protocol = {
 		assembly.removePollOption(option)
 	}),
 	startPoll: isAdmin(({ assembly }) => assembly.startPoll()),
-	sendVote: pollStarted(({ assembly, sessionId, vote }) => {}),
+	sendpoll: pollStarted(({ assembly, sessionId, poll }) => {}),
 	endPoll: isAdmin(({ }) => {})
 }
 

@@ -17,13 +17,13 @@
 		</ul>
 	</li>
 	<li>
-		<h3>Admin creates a vote</h3>
+		<h3>Admin creates a poll</h3>
 		<ul>
-			<li>People can vote</li>
-			<li>When all people voted, vote closes</li>
-			<li>Or, when admin closes vote</li>
-			<li>Who voted will be streamed to everyone</li>
-			<li>When vote is closed, results will be distributed.</li>
+			<li>People can poll</li>
+			<li>When all people polld, poll closes</li>
+			<li>Or, when admin closes poll</li>
+			<li>Who polld will be streamed to everyone</li>
+			<li>When poll is closed, results will be distributed.</li>
 		</ul>
 	</li>
 </ul>
@@ -34,8 +34,8 @@
 	<li>Create user</li>
 	<li>[user] Assembly overview</li>
 	<li>[admin] Assembly overview</li>
-	<li>[admin] Vote creation</li>
-	<li>[user] Vote screen</li>
+	<li>[admin] poll creation</li>
+	<li>[user] poll screen</li>
 </ul>
 
 <style>
