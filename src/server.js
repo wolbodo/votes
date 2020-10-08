@@ -94,7 +94,18 @@ wss.on('connection', function connection(ws, request) {
 		const { data, type } = JSON.parse(msg)
 		const action = protocol[type] || (() => console.warn("Unknown message received", type))
 
-		action({ type, assembly, sessionId, ws, data })
+		try {
+			action({ type, assembly, sessionId, ws, data })
+		} catch (e) {
+			console.log("Had errror:", e.name, e.message )
+			ws.send(JSON.stringify({
+				type: 'error',
+				data: {
+					name: e.name,
+					message: e.message
+				}
+			}))
+		}
 	})
 
 	ws.on('close', () => {
@@ -106,7 +117,7 @@ wss.on('connection', function connection(ws, request) {
 			} else {
 				console.log(`Close: '${session.identity.name}' closed socket`)
 			}
-			assembly.sendClientList()
+			assembly.sendAssemblyData()
 		}
 	})
 	ws.on('error', () => {
@@ -118,7 +129,7 @@ wss.on('connection', function connection(ws, request) {
 			} else {
 				console.log(`Error: '${session.identity.name}' closed socket`)
 			}
-			assembly.sendClientList()
+			assembly.sendAssemblyData()
 		}
 	})
 })

@@ -8,6 +8,8 @@ const random = (size) => new Promise((resolve, reject) => {
     })
 })
 
+class WaitError extends Error {}
+
 export default class Assembly {
     static assemblies = new Map()
     static clientAssemblies = new Map()
@@ -31,17 +33,21 @@ export default class Assembly {
     constructor(id) {
         this.id = id
         this.sessions = new Map()
-
+        this.state = 'lobby'
         this.nextPoll = {}
     }
 
+    // Lobby operations
+
     join(clientId, identity) {
+        if (this.state !== 'lobby') throw new WaitError('Wait please')
+
         console.log("Got id:", identity)
         this.sessions.set(clientId, {
             identity
         })
         Assembly.clientAssemblies.set(clientId, this)
-        this.sendClientList()
+        this.sendAssembyData()
         this.sendClientInfo(clientId)
     }
     joinSocket(clientId, socket) {
@@ -50,37 +56,49 @@ export default class Assembly {
             ...session,
             socket
         })
-        this.sendClientList()
+        this.sendAssembyData()
         this.sendClientInfo(clientId)
     }
     
     // Poll mgmt
     setPollInfo({ subject }) {
+        if (this.state !== 'lobby') throw new WaitError('Wait please')
+
         this.nextPoll = { ... this.nextPoll, subject }
-        this.sendPollInfo()
+        this.sendAssembyData()
     }
 
     addPollOption(option) {
+        if (this.state !== 'lobby') throw new WaitError('Wait please')
+
         this.nextPoll = {
             ...this.nextPoll,
             options: [...new Set([ ...this.nextPoll.options || [], option ])]
         }
-        this.sendPollInfo()
+        this.sendAssembyData()
     }
     removePollOption(option) {
+        if (this.state !== 'lobby') throw new WaitError('Wait please')
+
         this.nextPoll = {
             ...this.nextPoll,
             options: this.nextPoll.options.filter(opt => opt !== option)
         }
-        this.sendPollInfo()   
+        this.sendAssembyData()   
     }
     startPoll() {
-        this.currentPoll = this.nextPoll
-        this.nextPoll = null
-        this.sendPollInfo()
+        if (this.state !== 'lobby') throw new WaitError('Wait please')
+
+        if (!this.nextPoll.subject || !(this.nextPoll.options && this.nextPoll.options.length))
+            throw new Error('Poll not ready')
+
+        this.state = 'polling'
+        this.sendAssembyData()
     }
 
     updateSession(clientId, update) {
+        if (this.state !== 'lobby') throw new WaitError('Wait please')
+
         const session = this.sessions.get(clientId)
         
         this.sessions.set(clientId, {
@@ -88,14 +106,16 @@ export default class Assembly {
             ...update
         })
         this.sendClientInfo(clientId)
-        this.sendClientList()
-        this.sendPollInfo()
+        this.sendAssembyData()
+        this.sendAssembyData()
     }
     removeSession(clientId) {
+        if (this.state !== 'lobby') throw new WaitError('Wait please')
+
         const { socket } = this.sessions.get(clientId)
         this.sessions.delete(clientId)
         Assembly.clientAssemblies.delete(clientId)
-        this.sendClientList()
+        this.sendAssembyData()
 
         socket.send(JSON.stringify({
             type: 'kicked'
@@ -115,24 +135,6 @@ export default class Assembly {
             .forEach(({ socket }) => socket.send(msg))
     }
 
-    sendClientList() {
-        if (!this.__willUpdateClients) {
-            this.__willUpdateClients = setTimeout(() => {
-                const sessions = [...this.sessions.values()]
-                const clients = sessions.map(({ identity, socket, ...rest }) => ({
-                    name: identity.name,
-                    socket: socket && socket.readyState,
-                    ...rest
-                }))
-                const msg = JSON.stringify({
-                    type: 'clientList',
-                    data: clients
-                })
-                this.sendAll(msg)
-                delete this.__willUpdateClients
-            }, 10)
-        }
-    }
     sendClientInfo(clientId) {
         const { socket, identity, ...rest} = this.sessions.get(clientId)
         if (!socket) return
@@ -146,19 +148,26 @@ export default class Assembly {
         })
         socket.send(msg)
     }
-    sendPollInfo() {
-        if (!this.__willSendPollInfo) {
-            this.__willSendPollInfo = setTimeout(() => {
+    sendAssembyData() {
+        if (!this.__sendingAssemblyData) {
+            this.__sendingAssemblyData = setTimeout(() => {
+                const sessions = [...this.sessions.values()]
+                const clients = sessions.map(({ identity, socket, ...rest }) => ({
+                    name: identity.name,
+                    socket: socket && socket.readyState,
+                    ...rest
+                }))
                 const msg = JSON.stringify({
-                    type: 'pollInfo',
+                    type: 'assemblyData',
                     data: {
-                        next: this.nextPoll,
-                        current: this.currentPoll,
-                        previous: this.polls
+                        state: this.state,
+                        clients,
+                        nextPoll: this.nextPoll,
+                        polls: this.polls
                     }
                 })
                 this.sendAll(msg)
-                delete this.__willSendPollInfo
+                delete this.__sendingAssemblyData
             }, 10)
         }
     }

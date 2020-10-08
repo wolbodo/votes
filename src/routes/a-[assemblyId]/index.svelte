@@ -10,24 +10,30 @@
     let clientInfo
     let pollInfo
     let pollSubject, newPollOption
+    let assemblyState
+    let errorMessage
+
+    let choice
 
     $: assemblyId = $page.params.assemblyId
     const actions = {
         clientInfo({ data }) {
             clientInfo = data
         },
-        clientList({ data }) {
-            clientList = data
-        },
-        pollInfo({ data }) {
-            console.log("Got pollInfo:", data)
-            pollInfo = data.next
+        assemblyData({ data: { state, clients, nextPoll, poll} }) {
+            clientList = clients
+            pollInfo = nextPoll
+            
+            assemblyState = state
         },
         requestIdentity() {
             goto(`a-${assemblyId}/hello`)
         },
         kicked() {
             goto('/kicked')
+        },
+        error( { data: { message }}) {
+            errorMessage = message
         }
     }
 	onMount(() => {
@@ -39,6 +45,10 @@
             console.log("Received message:", type, data)
             const action = actions[type] || (() => console.warn("Unknown message received", type))
             action({ type, data })
+
+            if (type !== 'error') {
+                errorMessage = null
+            }
         })
         
         ws.addEventListener('open', () => {
@@ -67,11 +77,16 @@
     }
 
     $: isAdmin = clientInfo && clientInfo.isAdmin
+    $: inLobby = assemblyState === 'lobby'
+    $: isPolling = assemblyState === 'polling'
 </script>
 
 <h1>Welcome to assembly</h1>
 <a href={`http://localhost:3000/a-${assemblyId}`}>http://localhost:3000/a-{assemblyId}</a>
 
+{#if errorMessage}
+    <p>Error: {errorMessage}</p>
+{/if}
 
 {#if clientList}
     <ul>
@@ -79,7 +94,7 @@
             <li>
                 {client.name}
                 {client.isAdmin ? '(admin)': ''}:
-                {#if isAdmin}
+                {#if isAdmin && inLobby}
                     {#if !client.inLobby}
                         <button on:click={send('setLobby', { name: client.name, inLobby: true })}>
                             Allow in
@@ -103,48 +118,66 @@
         {/each}
     </ul>
 
-    <h2>Upcoming vote</h2>
-    {#if isAdmin}
-        <form on:submit|preventDefault={() => {
-            send('setPollInfo', { subject: pollSubject })
-            pollSubject = ''
-        }}>
-            <label for="voteSubject">Subject</label>
-            <input required id="voteSubject" bind:value={pollSubject} />
+    
+    {#if inLobby}
+        <h2>Upcoming vote</h2>
+        {#if isAdmin}
+            <form on:submit|preventDefault={() => {
+                send('setPollInfo', { subject: pollSubject })
+                pollSubject = ''
+            }}>
+                <label for="voteSubject">Subject</label>
+                <input required id="voteSubject" bind:value={pollSubject} />
 
-            <button>Set subject</button>
-        </form>
-        <form on:submit|preventDefault={() => {
-            send('addPollOption', { option: newPollOption })
-            newPollOption = ''
-        }}>
-            <label for="pollOption">Option</label>
-            <input required id="pollOption" bind:value={newPollOption} />
+                <button>Set subject</button>
+            </form>
+            <form on:submit|preventDefault={() => {
+                send('addPollOption', { option: newPollOption })
+                newPollOption = ''
+            }}>
+                <label for="pollOption">Option</label>
+                <input required id="pollOption" bind:value={newPollOption} />
 
-            <button>Add poll option</button>
-        </form>
-        <button on:click={() => send('startPoll')}>Start poll</button>
-
-    {/if}
-
-    {#if pollInfo}
-        <h3>Subject: {pollInfo.subject}</h3>
-        {#if pollInfo.options}
-            <ul>
-                {#each pollInfo.options as option}
-                    <li>
-                        {option}
-                        {#if isAdmin}
-                            <button on:click={() => send('removePollOption', { option })}>
-                                Remove
-                            </button>
-                        {/if}
-                    </li>
-                {/each}
-            </ul>
+                <button>Add poll option</button>
+            </form>
+            <button on:click={() => send('startPoll')}>Start poll</button>
         {/if}
-    {:else}
-        <p>Is still being drafted</p>
+
+        {#if pollInfo}
+            <h3>Subject: {pollInfo.subject}</h3>
+            {#if pollInfo.options}
+                <ul>
+                    {#each pollInfo.options as option}
+                        <li>
+                            {option}
+                            {#if isAdmin && inLobby}
+                                <button on:click={() => send('removePollOption', { option })}>
+                                    Remove
+                                </button>
+                            {/if}
+                        </li>
+                    {/each}
+                </ul>
+            {:else}
+                <p>No options defined yet</p>
+            {/if}
+        {:else}
+            <p>Is still being drafted</p>
+        {/if}
+    {:else if isPolling}
+        <form on:submit|preventDefault={() => send('vote', { choice })}>
+            <h2>Current vote: {pollInfo.subject}</h2>
+            
+            {#each pollInfo.options as option}
+                <p>
+                    <input type="radio" id={option} bind:group={choice} value={option}>
+                    <label for={option}>{option}</label>
+                </p>
+            {/each}
+
+            <button on:click|preventDefault={() => choice = null}>Clear vote</button>
+            <button>Cast vote</button>
+        </form>
     {/if}
 
 {:else}
@@ -154,4 +187,12 @@
 
 
 
-<pre>clientInfo: {JSON.stringify(clientInfo, null, 2)}</pre>
+<pre>clientInfo: {JSON.stringify({
+    clientList,
+    clientInfo,
+    pollInfo,
+    pollSubject, newPollOption,
+    assemblyState,
+    errorMessage,
+    choice
+}, null, 2)}</pre>
