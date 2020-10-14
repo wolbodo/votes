@@ -1,56 +1,45 @@
 <script>
-    import { stores, goto } from '@sapper/app';
-    const { page } = stores();
+  import { getContext } from 'svelte';
+  import { get } from 'svelte/store'
+  import { goto } from '@sapper/app'
 
-    let posting = false
-    let name
-    let error
-
-	async function identify() {
-        try {
-            posting = true
-            error = null
-            const assemblyId = $page.params.assemblyId
-            const response = await fetch('/join', {
-                method: 'post',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    name,
-                    assemblyId
-                })
-            })
-            if (response.status !== 200) {
-                throw new Error("Could not join assembly")
-            }
-            goto(`/a-${assemblyId}`)
-        } catch (e) {
-            error = e.message
-            throw e
-        } finally {
-            posting = false
-        }
-	}
+  const { id, identifyUser } = getContext('assembly')
+  
+  let posting = false
+  let name
+  let error
+  
+  async function identify() {
+    try {
+      posting = true
+      error = null
+      identifyUser(name)
+      goto(`/a-${id}`)
+    } catch (e) {
+      error = e.message
+      throw e
+    } finally {
+      posting = false
+    }
+  }
 </script>
 
-
 <svelte:head>
-	<title>Assemblies|create</title>
+  <title>Assemblies|create</title>
 </svelte:head>
 
 <h1>Welcome, to join, identify yourself</h1>
 
 <form on:submit|preventDefault={identify} disabled={posting}>
-	<label for='name'>Name</label>
-	<input required id='name' bind:value={name} />
-
-    {#if error} {error} {/if}
-	<button>Join</button>
+  <label for='name'>Name</label>
+  <input required id='name' bind:value={name} />
+  
+  {#if error} {error} {/if}
+  <button>Join</button>
 </form>
 
 <style>
-    form > * {
-        display: block;
-    }
+  form > * {
+    display: block;
+  }
 </style>

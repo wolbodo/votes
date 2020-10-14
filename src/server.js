@@ -42,14 +42,15 @@ const isAdmin = (func) => ({ assembly, sessionId, ...rest }) => {
 		return func({ assembly, sessionId, ...rest })
 	}
 }
+
 const pollStarted = (func) => ({ assembly, ...rest}) => {
 	if (assembly.currentPoll) {
 		return func({ assembly, ...rest })
 	}
 }
+
 const protocol = {
 	join({ assembly, sessionId, ws }) {
-		console.log("Join on", assembly)
 		assembly.joinSocket(sessionId, ws)
 	},
 	setAdmin: isAdmin(({ assembly, data: { name, isAdmin = true } }) => {
@@ -76,22 +77,34 @@ const protocol = {
 	}),
 	startPoll: isAdmin(({ assembly }) => assembly.startPoll()),
 	sendpoll: pollStarted(({ assembly, sessionId, poll }) => {}),
-	endPoll: isAdmin(({ }) => {})
-}
+	endPoll: isAdmin(({ }) => {}),
+	identifyUser({ assembly, sessionId, data: { name } }, ws) {
+		if (assembly.getSessionIdByName(name)) {
+			throw new Error('Name already in use')
+		}
 
+		assembly.join(sessionId, { name })
+	}
+}
 
 wss.on('connection', function connection(ws, request) {
 	const sessionId = request.session.id
+	const assemblyId = request.url.slice(1)
 	
 	ws.on('message', msg => {
-		const assembly = Assembly.getAssemblyByClientId(sessionId)
+		const assembly = Assembly.byId(assemblyId)
 		console.log(`Received message ${msg} from user ${sessionId}`, !!assembly)
 		
 		if (!assembly) {
-			ws.send(JSON.stringify({ type: 'requestIdentity' }))
+			ws.send(JSON.stringify({ type: 'error' }))
 			return
 		}
 		const { data, type } = JSON.parse(msg)
+		
+		if (!assembly.sessions.has(sessionId) && type !== 'identifyUser') {
+			ws.send(JSON.stringify({ type: 'requestIdentity' }))
+			return
+		}
 		const action = protocol[type] || (() => console.warn("Unknown message received", type))
 
 		try {
@@ -109,6 +122,7 @@ wss.on('connection', function connection(ws, request) {
 	})
 
 	ws.on('close', () => {
+		console.log("ws:close")
 		const assembly = Assembly.getAssemblyByClientId(sessionId)
 		if (assembly) {
 			const session = assembly.sessions.get(sessionId)
@@ -121,6 +135,7 @@ wss.on('connection', function connection(ws, request) {
 		}
 	})
 	ws.on('error', () => {
+		console.log("ws:error")
 		const assembly = Assembly.getAssemblyByClientId(sessionId)
 		if (assembly) {
 			const session = assembly.sessions.get(sessionId)
@@ -133,7 +148,6 @@ wss.on('connection', function connection(ws, request) {
 		}
 	})
 })
-
 
 server.on('upgrade', function upgrade(request, socket, head) {
   // This function is not defined on purpose. Implement it with your own logic.

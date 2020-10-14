@@ -47,7 +47,7 @@ export default class Assembly {
             identity
         })
         Assembly.clientAssemblies.set(clientId, this)
-        this.sendAssembyData()
+        this.sendAssemblyData()
         this.sendClientInfo(clientId)
     }
     joinSocket(clientId, socket) {
@@ -56,7 +56,7 @@ export default class Assembly {
             ...session,
             socket
         })
-        this.sendAssembyData()
+        this.sendAssemblyData()
         this.sendClientInfo(clientId)
     }
     
@@ -65,7 +65,7 @@ export default class Assembly {
         if (this.state !== 'lobby') throw new WaitError('Wait please')
 
         this.nextPoll = { ... this.nextPoll, subject }
-        this.sendAssembyData()
+        this.sendAssemblyData()
     }
 
     addPollOption(option) {
@@ -75,7 +75,7 @@ export default class Assembly {
             ...this.nextPoll,
             options: [...new Set([ ...this.nextPoll.options || [], option ])]
         }
-        this.sendAssembyData()
+        this.sendAssemblyData()
     }
     removePollOption(option) {
         if (this.state !== 'lobby') throw new WaitError('Wait please')
@@ -84,7 +84,7 @@ export default class Assembly {
             ...this.nextPoll,
             options: this.nextPoll.options.filter(opt => opt !== option)
         }
-        this.sendAssembyData()   
+        this.sendAssemblyData()   
     }
     startPoll() {
         if (this.state !== 'lobby') throw new WaitError('Wait please')
@@ -93,7 +93,7 @@ export default class Assembly {
             throw new Error('Poll not ready')
 
         this.state = 'polling'
-        this.sendAssembyData()
+        this.sendAssemblyData()
     }
 
     updateSession(clientId, update) {
@@ -106,8 +106,7 @@ export default class Assembly {
             ...update
         })
         this.sendClientInfo(clientId)
-        this.sendAssembyData()
-        this.sendAssembyData()
+        this.sendAssemblyData()
     }
     removeSession(clientId) {
         if (this.state !== 'lobby') throw new WaitError('Wait please')
@@ -115,7 +114,7 @@ export default class Assembly {
         const { socket } = this.sessions.get(clientId)
         this.sessions.delete(clientId)
         Assembly.clientAssemblies.delete(clientId)
-        this.sendAssembyData()
+        this.sendAssemblyData()
 
         socket.send(JSON.stringify({
             type: 'kicked'
@@ -130,9 +129,11 @@ export default class Assembly {
     }
 
     sendAll(msg, filter = () => true) {
-        [...this.sessions.values()]
-            .filter(session => !!session.socket && session.inLobby && filter(session))
-            .forEach(({ socket }) => socket.send(msg))
+        const active = [...this.sessions.values()]
+        .filter(session => !!session.socket && session.inLobby && filter(session))
+        console.log('Sending to all:', active.map(({ identity: { name } }) => name), msg)
+        
+        active.forEach(({ socket }) => socket.send(msg))
     }
 
     sendClientInfo(clientId) {
@@ -148,7 +149,8 @@ export default class Assembly {
         })
         socket.send(msg)
     }
-    sendAssembyData() {
+
+    sendAssemblyData() {
         if (!this.__sendingAssemblyData) {
             this.__sendingAssemblyData = setTimeout(() => {
                 const sessions = [...this.sessions.values()]
