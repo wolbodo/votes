@@ -1,18 +1,10 @@
 import { stores, goto } from '@sapper/app'
 import { readable, get} from 'svelte/store'
 
-// Websocket stores
-
-// setup websocket => {
-//   mutations,
-//   stores
-// }
-
-
 export default () => {
-  
   const { page } = stores();
   const id = get(page).params.assemblyId
+  let clearError
 
   const ws = process.browser && new WebSocket(
     `${
@@ -38,7 +30,9 @@ export default () => {
     if (!ws) return
 
     const set = (update) => _set({...get(store), ...update})
-    const actions = {
+    clearError = () => set({ error: null })
+    
+    const handlers = {
       clientInfo({ data: info }) {
         set({ info })
       },
@@ -55,7 +49,8 @@ export default () => {
       kicked() {
         goto('/kicked')
       },
-      error( { data: { message }}) {
+      error( { data: { name, message }}) {
+        console.log("Had error:", name, message)
         set({ error: message })
       }
     }
@@ -63,12 +58,8 @@ export default () => {
       const { data, type} = JSON.parse(event.data);
       console.log("ws:message", type, data)
 
-      const action = actions[type] || (() => console.warn("Unknown message received", type))
-      action({ type, data })
-      
-      if (type !== 'error') {
-        set({ error: null })
-      }
+      const handler = handlers[type] || (() => console.warn("Unknown message received", type))
+      handler({ type, data })
     })
     
     ws.addEventListener('open', () => {
@@ -97,6 +88,21 @@ export default () => {
       send('identifyUser', { name })
       send('join')
     },
+    setPollInfo(subject) {
+      send('setPollInfo', { subject })
+    },
+    addPollOption(option) {
+      send('addPollOption', { option })
+    },
+    removePollOption(option) {
+      send('removePollOption', { option })
+    },
+    startPoll() {
+      send('startPoll')
+    },
+    clearError() {
+      clearError && clearError()
+    }
   }
 }
 

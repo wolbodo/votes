@@ -1,9 +1,18 @@
 body {
+	--background: #333;
+	--background-dark: #222;
+	--text: white;
+	--color: #abd0ff6b;
+	--color-accent: #abd0ff8b;
+	--error: #ff0c0c3d;
+
 	margin: 0;
 	font-family: Roboto, -apple-system, BlinkMacSystemFont, Segoe UI, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
 	font-size: 14px;
 	line-height: 1.5;
-	color: #333;
+	background-color: var(--background, #333);
+	color: var(--text, white);
+
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -33,4 +42,25 @@ code {
 	body {
 		font-size: 16px;
 	}
+}
+
+input, button, textarea {
+	border: none;
+	padding: 0.5rem;
+	margin: 0.5rem 0;
+	font-size: 1.2rem;
+	background: var(--background-dark);
+	color: var(--text);
+}
+input, textarea {
+	border: 3px solid var(--color);
+}
+input:hover, input:focus, textarea:hover, textarea:focus {
+	border: 3px solid var(--color-accent);
+}
+button {
+	background: var(--color);
+}
+button:hover, button:focus {
+	background: var(--color-accent);
 }

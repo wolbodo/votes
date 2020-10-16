@@ -1,38 +1,22 @@
 <script>
   import { getContext } from "svelte";
-  import { getSocketState } from './_socket'
+  import ClientList from '../../components/ClientList.svelte'
+  import PollView from '../../components/PollView.svelte'
+  import PollEdit from '../../components/PollEdit.svelte'
 
-  const { store, setLobby, setAdmin } = getContext('assembly')
+  const { store } = getContext('assembly')
   
-  $: ({ isAdmin, inLobby } = $store.info)
+  $: ({ isAdmin } = $store.info)
 </script>
 
+<ClientList />
 
-<ul>
-  {#each $store.clients as client }
-  <li>
-    {client.name}
-    {client.isAdmin ? '(admin)': ''}:
-    {#if isAdmin && inLobby}
-      {#if !client.inLobby}
-        <button on:click={setLobby(client.name, true)}>
-          Allow in
-        </button>
-      {:else if client.name !== $store.info.name}
-        <button on:click={setLobby(client.name, false)}>
-          Kick
-        </button>
-        <button on:click={setAdmin(client.name, !client.isAdmin)}>
-          {#if client.isAdmin}
-          Remove admin
-          {:else}
-          Make admin
-          {/if}
-        </button>
-      {/if}
-    {/if}
-    {client.inLobby ? '(in lobby)': ''}:
-    {getSocketState(client.socket)}
-  </li>
-  {/each}
-</ul>
+<section>
+  <h2>Upcoming poll:</h2>
+
+  {#if isAdmin}
+    <PollEdit />
+  {/if}
+  <PollView />
+</section>
+

@@ -34,7 +34,7 @@ export default class Assembly {
         this.id = id
         this.sessions = new Map()
         this.state = 'lobby'
-        this.nextPoll = {}
+        this.poll = {}
     }
 
     // Lobby operations
@@ -64,32 +64,32 @@ export default class Assembly {
     setPollInfo({ subject }) {
         if (this.state !== 'lobby') throw new WaitError('Wait please')
 
-        this.nextPoll = { ... this.nextPoll, subject }
+        this.poll = { ... this.poll, subject }
         this.sendAssemblyData()
     }
 
     addPollOption(option) {
         if (this.state !== 'lobby') throw new WaitError('Wait please')
 
-        this.nextPoll = {
-            ...this.nextPoll,
-            options: [...new Set([ ...this.nextPoll.options || [], option ])]
+        this.poll = {
+            ...this.poll,
+            options: [...new Set([ ...this.poll.options || [], option ])]
         }
         this.sendAssemblyData()
     }
     removePollOption(option) {
         if (this.state !== 'lobby') throw new WaitError('Wait please')
 
-        this.nextPoll = {
-            ...this.nextPoll,
-            options: this.nextPoll.options.filter(opt => opt !== option)
+        this.poll = {
+            ...this.poll,
+            options: this.poll.options.filter(opt => opt !== option)
         }
         this.sendAssemblyData()   
     }
     startPoll() {
         if (this.state !== 'lobby') throw new WaitError('Wait please')
 
-        if (!this.nextPoll.subject || !(this.nextPoll.options && this.nextPoll.options.length))
+        if (!this.poll.subject || !(this.poll.options && this.poll.options.length))
             throw new Error('Poll not ready')
 
         this.state = 'polling'
@@ -164,7 +164,7 @@ export default class Assembly {
                     data: {
                         state: this.state,
                         clients,
-                        nextPoll: this.nextPoll,
+                        poll: this.poll,
                         polls: this.polls
                     }
                 })

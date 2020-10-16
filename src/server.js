@@ -110,7 +110,7 @@ wss.on('connection', function connection(ws, request) {
 		try {
 			action({ type, assembly, sessionId, ws, data })
 		} catch (e) {
-			console.log("Had errror:", e.name, e.message )
+			console.log("Had error:", e.name, e.message )
 			ws.send(JSON.stringify({
 				type: 'error',
 				data: {

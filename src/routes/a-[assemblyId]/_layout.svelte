@@ -1,11 +1,21 @@
 
 <script>
   import { setContext } from 'svelte';
-  import socket from './_socket'
+  import { stores, goto } from '@sapper/app'
+  import socket from '../../socket'
+
+  const { page } = stores()
 
   const assembly = socket()
-  const { store, id } = assembly
+  const { store, id, clearError } = assembly
   setContext('assembly', assembly)
+
+  // Guard pages
+  $: if ($store.state === 'polling') {
+    console.log("Testing")
+    if (! /\/poll/.test($page.path))
+      goto(`/a-${$page.params.assemblyId}/poll`)
+  }
 
 </script>
 
@@ -13,11 +23,27 @@
 <a href={`http://localhost:3000/a-${id}`}>http://localhost:3000/a-{id}</a>
 
 {#if process.browser && store}
-  {#if $store.error}
-    <p>Error: {$store.error}</p>
-  {/if}
-
-  <slot />
-  
-  <pre>store: {JSON.stringify($store, null, 2)}</pre>
+{#if $store.error}
+<section>
+  <h2>Error: </h2>
+  {$store.error}
+  <button on:click={clearError}>Ok</button>
+</section>
 {/if}
+
+<slot />
+
+  <pre>store: {JSON.stringify($store, null, 2)}</pre>
+  <pre>page: {JSON.stringify($page, null, 2)}</pre>
+{/if}
+
+<style>
+  section {
+    background: var(--error);
+    margin: 1rem -1rem;
+    padding: 1rem;
+  }
+  section h2 {
+    display: inline;
+  }
+</style>
