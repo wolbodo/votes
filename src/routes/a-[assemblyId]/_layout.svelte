@@ -12,9 +12,13 @@
 
   // Guard pages
   $: if ($store.state === 'polling') {
-    console.log("Testing")
-    if (! /\/poll/.test($page.path))
+    if (/\/poll/.test($page.path) && $store.info.hasVoted) {
+      goto(`/a-${$page.params.assemblyId}`)
+    } else if (!/\/poll/.test($page.path) && !$store.info.hasVoted) {
       goto(`/a-${$page.params.assemblyId}/poll`)
+    }
+  } else if ($store.state === 'lobby' && /\/poll/.test($page.path)) {
+    goto(`/a-${$page.params.assemblyId}`)
   }
 
 </script>

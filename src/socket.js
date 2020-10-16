@@ -31,16 +31,17 @@ export default () => {
 
     const set = (update) => _set({...get(store), ...update})
     clearError = () => set({ error: null })
-    
+
     const handlers = {
       clientInfo({ data: info }) {
         set({ info })
       },
-      assemblyData({ data: { state, clients, poll} }) {
+      assemblyData({ data: { state, clients, poll, previousPolls} }) {
         set({ 
           clients,
           poll,
-          state
+          state,
+          previousPolls
         })
       },
       requestIdentity() {
@@ -102,6 +103,9 @@ export default () => {
     },
     clearError() {
       clearError && clearError()
+    },
+    castVote(vote) {
+      send('castVote', { vote })
     }
   }
 }

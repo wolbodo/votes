@@ -2,175 +2,231 @@ import crypto from 'crypto'
 
 // Asynchronous
 const random = (size) => new Promise((resolve, reject) => {
-    crypto.randomBytes(size, (err, buf) => {
-        if (err) reject(err)
-        resolve(buf.toString('hex'));
-    })
+  crypto.randomBytes(size, (err, buf) => {
+    if (err) reject(err)
+    resolve(buf.toString('hex'));
+  })
 })
 
 class WaitError extends Error {}
 
 export default class Assembly {
-    static assemblies = new Map()
-    static clientAssemblies = new Map()
-
-    static async create () {
-        const id = await random(4)
-        const assembly = new Assembly(id)
-        this.assemblies.set(id, assembly)
-
-        return assembly
+  static assemblies = new Map()
+  static clientAssemblies = new Map()
+  
+  static async create () {
+    const id = await random(4)
+    const assembly = new Assembly(id)
+    this.assemblies.set(id, assembly)
+    
+    return assembly
+  }
+  
+  static getAssemblyByClientId (clientId) {
+    return this.clientAssemblies.get(clientId)
+  }
+  
+  static byId(assemblyId) {
+    return this.assemblies.get(assemblyId)
+  }
+  
+  constructor(id) {
+    this.id = id
+    this.sessions = new Map()
+    this.state = 'lobby'
+    this.poll = {}
+    this.previousPolls = new Set()
+  }
+  
+  // Lobby operations
+  
+  join(clientId, identity) {
+    if (this.state !== 'lobby') throw new WaitError('Wait please')
+    
+    console.log("Got id:", identity)
+    this.sessions.set(clientId, {
+      identity
+    })
+    Assembly.clientAssemblies.set(clientId, this)
+    this.sendAssemblyData()
+    this.sendClientInfo(clientId)
+  }
+  joinSocket(clientId, socket) {
+    const session = this.sessions.get(clientId)
+    this.sessions.set(clientId, {
+      ...session,
+      socket
+    })
+    this.sendAssemblyData()
+    this.sendClientInfo(clientId)
+  }
+  
+  // Poll mgmt
+  setPollInfo({ subject }) {
+    if (this.state !== 'lobby') throw new WaitError('Wait please')
+    
+    this.poll = { ... this.poll, subject }
+    this.sendAssemblyData()
+  }
+  
+  addPollOption(option) {
+    if (this.state !== 'lobby') throw new WaitError('Wait please')
+    
+    this.poll = {
+      ...this.poll,
+      options: [...new Set([ ...this.poll.options || [], option ])]
     }
-
-    static getAssemblyByClientId (clientId) {
-        return this.clientAssemblies.get(clientId)
+    this.sendAssemblyData()
+  }
+  removePollOption(option) {
+    if (this.state !== 'lobby') throw new WaitError('Wait please')
+    
+    this.poll = {
+      ...this.poll,
+      options: this.poll.options.filter(opt => opt !== option)
     }
-
-    static byId(assemblyId) {
-        return this.assemblies.get(assemblyId)
-    }
-
-    constructor(id) {
-        this.id = id
-        this.sessions = new Map()
-        this.state = 'lobby'
-        this.poll = {}
-    }
-
-    // Lobby operations
-
-    join(clientId, identity) {
-        if (this.state !== 'lobby') throw new WaitError('Wait please')
-
-        console.log("Got id:", identity)
-        this.sessions.set(clientId, {
-            identity
-        })
-        Assembly.clientAssemblies.set(clientId, this)
-        this.sendAssemblyData()
-        this.sendClientInfo(clientId)
-    }
-    joinSocket(clientId, socket) {
-        const session = this.sessions.get(clientId)
-        this.sessions.set(clientId, {
-            ...session,
-            socket
-        })
-        this.sendAssemblyData()
-        this.sendClientInfo(clientId)
+    this.sendAssemblyData()   
+  }
+  startPoll() {
+    if (this.state !== 'lobby') {
+      throw new WaitError('Wait please')
     }
     
-    // Poll mgmt
-    setPollInfo({ subject }) {
-        if (this.state !== 'lobby') throw new WaitError('Wait please')
-
-        this.poll = { ... this.poll, subject }
-        this.sendAssemblyData()
+    if (!this.poll.subject || !(this.poll.options && this.poll.options.length)){
+      throw new Error('Poll not ready')
     }
-
-    addPollOption(option) {
-        if (this.state !== 'lobby') throw new WaitError('Wait please')
-
-        this.poll = {
-            ...this.poll,
-            options: [...new Set([ ...this.poll.options || [], option ])]
-        }
-        this.sendAssemblyData()
+    
+    this.state = 'polling'
+    this.pollVotes = {
+      '__invalid__': 0,
+      ...Object.fromEntries(this.poll.options.map(option => ([option, 0])))
     }
-    removePollOption(option) {
-        if (this.state !== 'lobby') throw new WaitError('Wait please')
+    this.pollUsers = new Set(
+      [...this.sessions.entries()]
+        .filter(([ id, { inLobby } ]) => inLobby)
+        .map(([ id, _ ]) => id)
+    )
+    this.sendAssemblyData()
+  }
+  castVote(sessionId, vote) {
+    if (this.state !== 'polling') throw new Error('Not in a vote')
+    if (!this.pollUsers.has(sessionId)) throw new Error('Not allowed to vote')
 
-        this.poll = {
-            ...this.poll,
-            options: this.poll.options.filter(opt => opt !== option)
-        }
-        this.sendAssemblyData()   
+    if (!this.poll.options.includes(vote)) {
+      // Invalid vote
+      this.pollVotes.__invalid__ ++
+    } else {
+      this.pollVotes[vote] ++
     }
-    startPoll() {
-        if (this.state !== 'lobby') throw new WaitError('Wait please')
+    this.pollUsers.delete(sessionId)
 
-        if (!this.poll.subject || !(this.poll.options && this.poll.options.length))
-            throw new Error('Poll not ready')
-
-        this.state = 'polling'
-        this.sendAssemblyData()
+    if (this.pollUsers.size === 0) {
+      this.endPoll()
     }
+    this.sendClientInfo(sessionId)
+    this.sendAssemblyData()
+  }
+  endPoll() {
+    // Take all unvoted users and count them as invalid
+    this.pollVotes.__invalid__ += this.pollUsers.size
 
-    updateSession(clientId, update) {
-        if (this.state !== 'lobby') throw new WaitError('Wait please')
+    this.previousPolls.add({
+      ...this.poll,
+      votes: this.pollVotes,
+    })
+    this.poll = {}
+    delete this.pollVotes
+    delete this.pollUsers
 
-        const session = this.sessions.get(clientId)
-        
-        this.sessions.set(clientId, {
-            ...session,
-            ...update
-        })
-        this.sendClientInfo(clientId)
-        this.sendAssemblyData()
-    }
-    removeSession(clientId) {
-        if (this.state !== 'lobby') throw new WaitError('Wait please')
+    this.state = 'lobby'
+    this.sendAssemblyData()
+    
+    // Hacky, but reset all clientInfo
+    const active = [...this.sessions.entries()]
+      .filter(([id, { socket, inLobby }]) => !!socket && inLobby)
+      .map(([id, session]) => id)
+      .forEach(clientId => this.sendClientInfo(clientId))
 
-        const { socket } = this.sessions.get(clientId)
-        this.sessions.delete(clientId)
-        Assembly.clientAssemblies.delete(clientId)
-        this.sendAssemblyData()
-
-        socket.send(JSON.stringify({
-            type: 'kicked'
+  }
+  updateSession(clientId, update) {
+    if (this.state !== 'lobby') throw new WaitError('Wait please')
+    
+    const session = this.sessions.get(clientId)
+    
+    this.sessions.set(clientId, {
+      ...session,
+      ...update
+    })
+    this.sendClientInfo(clientId)
+    this.sendAssemblyData()
+  }
+  removeSession(clientId) {
+    if (this.state !== 'lobby') throw new WaitError('Wait please')
+    
+    const { socket } = this.sessions.get(clientId)
+    this.sessions.delete(clientId)
+    Assembly.clientAssemblies.delete(clientId)
+    this.sendAssemblyData()
+    
+    socket.send(JSON.stringify({
+      type: 'kicked'
+    }))
+  }
+  getSessionIdByName(name) {
+    // Check whether name already in the session
+    const iname = name.toLowerCase().replace(' ', '')
+    const result = [...this.sessions.entries()]
+    .find(([sessionId, { identity }]) => identity.name.toLowerCase().replace(' ', '') === iname)
+    return result ? result[0] : undefined
+  }
+  
+  sendAll(msg, filter = () => true) {
+    const active = [...this.sessions.values()]
+    .filter(session => !!session.socket && session.inLobby && filter(session))
+    console.log('Sending to all:', active.map(({ identity: { name } }) => name), msg)
+    
+    active.forEach(({ socket }) => socket.send(msg))
+  }
+  
+  sendClientInfo(clientId) {
+    const { socket, identity, ...rest} = this.sessions.get(clientId)
+    if (!socket) return
+    
+    const msg = JSON.stringify({
+      type: 'clientInfo',
+      data: {
+        name: identity.name,
+        hasVoted: this.pollUsers && !this.pollUsers.has(clientId),
+        ...rest
+      }
+    })
+    socket.send(msg)
+  }
+  
+  sendAssemblyData() {
+    if (!this.__sendingAssemblyData) {
+      this.__sendingAssemblyData = setTimeout(() => {
+        const sessions = [...this.sessions.values()]
+        const clients = sessions.map(({ identity, socket, ...rest }) => ({
+          name: identity.name,
+          socket: socket && socket.readyState,
+          ...rest
         }))
-    }
-    getSessionIdByName(name) {
-        // Check whether name already in the session
-        const iname = name.toLowerCase().replace(' ', '')
-        const result = [...this.sessions.entries()]
-            .find(([sessionId, { identity }]) => identity.name.toLowerCase().replace(' ', '') === iname)
-        return result ? result[0] : undefined
-    }
-
-    sendAll(msg, filter = () => true) {
-        const active = [...this.sessions.values()]
-        .filter(session => !!session.socket && session.inLobby && filter(session))
-        console.log('Sending to all:', active.map(({ identity: { name } }) => name), msg)
-        
-        active.forEach(({ socket }) => socket.send(msg))
-    }
-
-    sendClientInfo(clientId) {
-        const { socket, identity, ...rest} = this.sessions.get(clientId)
-        if (!socket) return
-
         const msg = JSON.stringify({
-            type: 'clientInfo',
-            data: {
-                name: identity.name,
-                ...rest
-            }
+          type: 'assemblyData',
+          data: {
+            state: this.state,
+            clients,
+            poll: {
+              ...this.poll,
+              toVote: this.pollUsers && [...this.pollUsers].map(id => this.sessions.get(id).identity.name)
+            },
+            previousPolls: [...this.previousPolls]
+          }
         })
-        socket.send(msg)
+        this.sendAll(msg)
+        delete this.__sendingAssemblyData
+      }, 10)
     }
-
-    sendAssemblyData() {
-        if (!this.__sendingAssemblyData) {
-            this.__sendingAssemblyData = setTimeout(() => {
-                const sessions = [...this.sessions.values()]
-                const clients = sessions.map(({ identity, socket, ...rest }) => ({
-                    name: identity.name,
-                    socket: socket && socket.readyState,
-                    ...rest
-                }))
-                const msg = JSON.stringify({
-                    type: 'assemblyData',
-                    data: {
-                        state: this.state,
-                        clients,
-                        poll: this.poll,
-                        polls: this.polls
-                    }
-                })
-                this.sendAll(msg)
-                delete this.__sendingAssemblyData
-            }, 10)
-        }
-    }
+  }
 }

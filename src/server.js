@@ -41,12 +41,8 @@ const isAdmin = (func) => ({ assembly, sessionId, ...rest }) => {
 	if (session.inLobby && session.isAdmin) {
 		return func({ assembly, sessionId, ...rest })
 	}
-}
 
-const pollStarted = (func) => ({ assembly, ...rest}) => {
-	if (assembly.currentPoll) {
-		return func({ assembly, ...rest })
-	}
+	throw new Error("Can't allow that Dave")
 }
 
 const protocol = {
@@ -76,8 +72,10 @@ const protocol = {
 		assembly.removePollOption(option)
 	}),
 	startPoll: isAdmin(({ assembly }) => assembly.startPoll()),
-	sendpoll: pollStarted(({ assembly, sessionId, poll }) => {}),
-	endPoll: isAdmin(({ }) => {}),
+	castVote: ({ assembly, sessionId, data: { vote } }) => {
+		assembly.castVote(sessionId, vote)
+	},
+	endPoll: isAdmin(({ assembly }) => assembly.endPoll()),
 	identifyUser({ assembly, sessionId, data: { name } }, ws) {
 		if (assembly.getSessionIdByName(name)) {
 			throw new Error('Name already in use')
