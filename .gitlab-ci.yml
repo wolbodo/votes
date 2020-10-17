@@ -1,0 +1,70 @@
+# include:
+#   template: Dependency-Scanning.gitlab-ci.yml
+
+stages:
+    - build:sapper
+    - build:image
+    # - test
+    - deploy
+
+# before_script:
+
+build:sapper:
+  stage: build:sapper
+  image: node:alpine
+  before_script:
+    - yarn install --pure-lockfile
+  script:
+    - yarn run export
+  artifacts:
+    paths:
+    - __sapper__/export
+    expire_in: 1 week
+  cache:
+    paths:
+    - node_modules/
+    
+
+build:branch:
+  stage: build:image
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  dependencies:
+    - build:sapper
+  only:
+    - branches
+  except:
+    - master
+
+build:master:
+  stage: build:image
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA --destination $CI_REGISTRY_IMAGE:latest
+  dependencies:
+    - build:sapper
+  only:
+    - master
+
+deploy:production:
+  stage: deploy
+  script:
+    - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD $CI_REGISTRY
+    # - cp .env.default .env
+    - docker-compose -p wlbd-votes pull
+    - docker-compose -p wlbd-votes up -d
+  tags:
+    # Deploy on vps
+    - visuals-deploy
+  environment:
+    name: production
+    url: https://votes.dxlb.nl
+  only:
+    - master

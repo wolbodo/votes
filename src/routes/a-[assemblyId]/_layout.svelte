@@ -37,7 +37,7 @@
 
 <slot />
 
-  <pre>store: {JSON.stringify($store, null, 2)}</pre>
+  <!-- <pre>store: {JSON.stringify($store, null, 2)}</pre> -->
   <!-- <pre>page: {JSON.stringify($page, null, 2)}</pre> -->
 {/if}
 

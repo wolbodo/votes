@@ -12,9 +12,6 @@
 </style>
 
 <main>
-	<ul>
-		<li><a href='/logout'>Logout</a></li>
-		<li><a href='/create'>Create assembly</a></li>
-	</ul>
 	<slot></slot>
+	<a href='/logout'>Logout</a>
 </main>

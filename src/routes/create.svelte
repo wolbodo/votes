@@ -3,8 +3,8 @@
 
     let creating = false
 
-	let name = 'Dexter'
-	let email = 'dexter@dxlb.nl'
+	let name
+	let email
 
 	async function createAssembly() {
         try {
