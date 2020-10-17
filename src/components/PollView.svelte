@@ -5,6 +5,7 @@
   
   $: ({ isAdmin, inLobby } = $store.info)
   $: poll = $store.poll
+  $: isPolling = $store.state === 'polling'
 </script>
 
 {#if poll}
@@ -14,7 +15,7 @@
       {#each poll.options as option}
       <li>
         {option}
-        {#if isAdmin && inLobby}
+        {#if isAdmin && inLobby && !isPolling}
           <button on:click={() => removePollOption(option)}>
           Remove
         </button>

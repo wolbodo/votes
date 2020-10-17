@@ -7,16 +7,27 @@
   const { store } = getContext('assembly')
   
   $: ({ isAdmin } = $store.info)
+
+  $: isPolling = $store.state === 'polling'
+  
 </script>
 
 <ClientList />
 
+{#if isPolling}
 <section>
-  <h2>Upcoming poll:</h2>
+  <h2>Poll in progress</h2>
 
-  {#if isAdmin}
-    <PollEdit />
-  {/if}
   <PollView />
 </section>
+{:else}
+  <section>
+    <h2>Upcoming poll:</h2>
+
+    {#if isAdmin && !isPolling }
+      <PollEdit />
+    {/if}
+    <PollView />
+  </section>
+{/if}
 
