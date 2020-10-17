@@ -12,10 +12,8 @@
     
     const result = []
     for (let i=array.length; i--; i >= 0) {
-      console.log(i)
       result.push(array[i])
     }
-    console.log("Array:", array, result)
     return result
   }
 

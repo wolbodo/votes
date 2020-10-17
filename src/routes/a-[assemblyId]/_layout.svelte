@@ -24,7 +24,7 @@
 </script>
 
 <h1>Welcome to assembly</h1>
-<a href={`http://localhost:3000/a-${id}`}>http://localhost:3000/a-{id}</a>
+<a href={`https://votes.wolbodo.nl/a-${id}`}>https://votes.wolbodo.nl/a-{id}</a>
 
 {#if process.browser && store}
 {#if $store.error}

@@ -1,6 +1,17 @@
-FROM nginx:stable-alpine
 
-RUN rm /etc/nginx/conf.d/default.conf
-COPY nginx.conf /etc/nginx/conf.d/site.conf
+FROM node:alpine
 
-ADD __sapper__/export /app/
+WORKDIR /app
+
+ADD package.json yarn.lock /app/
+
+RUN yarn install --prod --pure-lockfile && yarn cache clean
+
+ADD . /app/
+
+EXPOSE 80/tcp
+
+ENV PORT 80
+ENV NODE_ENV 'production'
+
+CMD ["node", "__sapper__/build"]

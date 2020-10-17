@@ -50,25 +50,30 @@ const protocol = {
 		assembly.joinSocket(sessionId, ws)
 	},
 	setAdmin: isAdmin(({ assembly, data: { name, isAdmin = true } }) => {
+		console.log(name, isAdmin ? "became admin" : "is no admin anymore")
 		const targetId = assembly.getSessionIdByName(name)
 		assembly.updateSession(targetId, { isAdmin })
 	}),
 	setLobby: isAdmin(({ assembly, data: { name, inLobby } }) => {
 		const targetId = assembly.getSessionIdByName(name)
 		if (!inLobby) {
+			console.log(name, "left lobby")
 			assembly.removeSession(targetId)
 		} else {
+			console.log(name, "joined lobby")
 			assembly.updateSession(targetId, { inLobby })
 		}
 	}),
 	setPollInfo: isAdmin(({ assembly, data }) => {
-		console.log("SEtting pollInfo", data)
+		console.log("setPollInfo", data)
 		assembly.setPollInfo(data)
 	}),
 	addPollOption: isAdmin(({ assembly, data: { option } }) => {
+		console.log("addPollOption", option)
 		assembly.addPollOption(option)
 	}),
 	removePollOption: isAdmin(({ assembly, data: { option } }) => {
+		console.log("removePollOption", option)
 		assembly.removePollOption(option)
 	}),
 	startPoll: isAdmin(({ assembly }) => assembly.startPoll()),
@@ -81,6 +86,7 @@ const protocol = {
 			throw new Error('Name already in use')
 		}
 
+		console.log(name, "wants to join")
 		assembly.join(sessionId, { name })
 	}
 }
@@ -91,7 +97,6 @@ wss.on('connection', function connection(ws, request) {
 	
 	ws.on('message', msg => {
 		const assembly = Assembly.byId(assemblyId)
-		console.log(`Received message ${msg} from user ${sessionId}`, !!assembly)
 		
 		if (!assembly) {
 			ws.send(JSON.stringify({ type: 'error' }))
@@ -120,7 +125,6 @@ wss.on('connection', function connection(ws, request) {
 	})
 
 	ws.on('close', () => {
-		console.log("ws:close")
 		const assembly = Assembly.getAssemblyByClientId(sessionId)
 		if (assembly) {
 			const session = assembly.sessions.get(sessionId)
@@ -133,7 +137,6 @@ wss.on('connection', function connection(ws, request) {
 		}
 	})
 	ws.on('error', () => {
-		console.log("ws:error")
 		const assembly = Assembly.getAssemblyByClientId(sessionId)
 		if (assembly) {
 			const session = assembly.sessions.get(sessionId)

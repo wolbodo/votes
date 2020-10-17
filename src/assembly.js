@@ -43,7 +43,7 @@ export default class Assembly {
   join(clientId, identity) {
     if (this.state !== 'lobby') throw new WaitError('Wait please')
     
-    console.log("Got id:", identity)
+    console.log("Joined:", identity)
     this.sessions.set(clientId, {
       identity
     })
@@ -106,6 +106,10 @@ export default class Assembly {
         .filter(([ id, { inLobby } ]) => inLobby)
         .map(([ id, _ ]) => id)
     )
+    console.log("===============================================")
+    console.log("Poll started:", this.pollUsers.size, "voters")
+    console.log("Subject:", this.poll.subject)
+    console.log("Options:", this.poll.options)
     this.sendAssemblyData()
   }
   castVote(sessionId, vote) {
@@ -119,6 +123,7 @@ export default class Assembly {
       this.pollVotes[vote] ++
     }
     this.pollUsers.delete(sessionId)
+    console.log("Vote counted: ", vote)
 
     if (this.pollUsers.size === 0) {
       this.endPoll()
@@ -134,6 +139,11 @@ export default class Assembly {
       ...this.poll,
       votes: this.pollVotes,
     })
+
+    console.log("Vote ended")
+    console.log("Results:", this.pollVotes)
+    console.log("===============================================")
+
     this.poll = {}
     delete this.pollVotes
     delete this.pollUsers
