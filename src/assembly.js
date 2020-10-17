@@ -35,7 +35,7 @@ export default class Assembly {
     this.sessions = new Map()
     this.state = 'lobby'
     this.poll = {}
-    this.previousPolls = new Set()
+    this.previousPolls = []
   }
   
   // Lobby operations
@@ -130,7 +130,7 @@ export default class Assembly {
     // Take all unvoted users and count them as invalid
     this.pollVotes.__invalid__ += this.pollUsers.size
 
-    this.previousPolls.add({
+    this.previousPolls.push({
       ...this.poll,
       votes: this.pollVotes,
     })
@@ -221,7 +221,7 @@ export default class Assembly {
               ...this.poll,
               toVote: this.pollUsers && [...this.pollUsers].map(id => this.sessions.get(id).identity.name)
             },
-            previousPolls: [...this.previousPolls]
+            previousPolls: this.previousPolls
           }
         })
         this.sendAll(msg)

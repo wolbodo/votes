@@ -106,6 +106,9 @@ export default () => {
     },
     castVote(vote) {
       send('castVote', { vote })
+    },
+    endPoll() {
+      send('endPoll')
     }
   }
 }

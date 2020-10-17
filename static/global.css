@@ -4,6 +4,8 @@ body {
 	--text: white;
 	--color: #abd0ff6b;
 	--color-accent: #abd0ff8b;
+	--warning: #acaa008a;
+	--success: #cdffab6b;
 	--error: #ff0c0c3d;
 
 	margin: 0;
@@ -61,6 +63,22 @@ input:hover, input:focus, textarea:hover, textarea:focus {
 button {
 	background: var(--color);
 }
+button[disabled] {
+	pointer-events: none;
+	opacity: 0.3;
+}
 button:hover, button:focus {
 	background: var(--color-accent);
+}
+button.warning {
+	background: var(--warning);
+}
+button.success {
+	background: var(--success);
+}
+
+content > section {
+	background: #0002;
+	margin: 1rem -1rem;
+	padding: 1rem;
 }

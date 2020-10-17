@@ -1,7 +1,7 @@
 <script>
   import { getContext } from "svelte";
 
-  const { store, removePollOption } = getContext('assembly')
+  const { store, removePollOption, endPoll } = getContext('assembly')
   
   $: ({ isAdmin, inLobby } = $store.info)
   $: poll = $store.poll
@@ -25,6 +25,10 @@
     </ul>
   {:else}
     <p>No options defined yet</p>
+  {/if}
+
+  {#if isAdmin && isPolling}
+    <button class='warning' on:click={endPoll}>Stop current poll</button>
   {/if}
 {:else}
 <p>Is still being drafted</p>

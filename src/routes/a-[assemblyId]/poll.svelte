@@ -18,7 +18,7 @@
     </p>
     {/each}
     
-    <button on:click|preventDefault={() => choice = null}>Clear poll</button>
-    <button>Vote</button>
+    <button disabled={!choice} on:click|preventDefault={() => choice = null}>Clear poll</button>
+    <button class='success'>Vote</button>
   {/if}
 </form>
