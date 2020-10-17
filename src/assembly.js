@@ -123,7 +123,7 @@ export default class Assembly {
       this.pollVotes[vote] ++
     }
     this.pollUsers.delete(sessionId)
-    console.log("Vote counted: ", vote)
+    // console.log("Vote counted: ", vote)
 
     if (this.pollUsers.size === 0) {
       this.endPoll()
