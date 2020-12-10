@@ -88,6 +88,9 @@ const protocol = {
 
 		console.log(name, "wants to join")
 		assembly.join(sessionId, { name })
+	},
+	ping({ sessionId }) {
+		console.log("ping from", ${sessionId})
 	}
 }
 

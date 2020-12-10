@@ -32,6 +32,11 @@ export default () => {
     const set = (update) => _set({...get(store), ...update})
     clearError = () => set({ error: null })
 
+    const pinger = setInterval(() => {
+      console.log("Pinging")
+      send('ping')
+    }, 60000)
+
     const handlers = {
       clientInfo({ data: info }) {
         set({ info })
