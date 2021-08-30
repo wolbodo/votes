@@ -15,10 +15,10 @@
 
   onMount(async () => {
 
-    await fetch('http://app.wolbodo/auth/mercure')
+    // await fetch('http://app.wolbodo/auth/mercure')
     // The subscriber subscribes to updates for the https://example.com/users/dunglas topic
     // and to any topic matching https://example.com/books/{id}
-    const url = new URL('http://mercure.wolbodo/.well-known/mercure');
+    const url = new URL('https://mercure.wolbodo.localhost/.well-known/mercure');
     url.searchParams.append('topic', 'http://votes.wolbodo/member');
     // The URL class is a convenient way to generate URLs such as https://localhost/.well-known/mercure?topic=https://example.com/books/{id}&topic=https://example.com/users/dunglas
 

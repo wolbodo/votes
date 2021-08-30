@@ -11,6 +11,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
+    environment:
+      CERT_NAME: wildcard
+      VIRTUAL_HOST: votes.wolbodo.nl
+
     volumes:
       - ./:/usr/src/app
       - /usr/src/app/node_modules
@@ -19,17 +23,16 @@ services:
     image: dunglas/mercure
     restart: unless-stopped
     environment:
-      # Uncomment the following line to disable HTTPS
-      SERVER_NAME: ':80'
+      CERT_NAME: wildcard
+      VIRTUAL_HOST: mercure.wolbodo.nl
+
       MERCURE_PUBLISHER_JWT_KEY: '!ChangeMe!'
       MERCURE_SUBSCRIBER_JWT_KEY: '!ChangeMe!'
-    # Uncomment the following line to enable the development mode
-    command: /usr/bin/caddy run -config /Caddyfile
-    ports:
-      - "80"
-      - "443"
+      MERCURE_EXTRA_DIRECTIVES: |
+        cors_origins http://votes.wolbodo/ https://votes.wolbodo.nl
+        anonymous
+        demo
     volumes:
-      - ./Caddyfile:/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
 
