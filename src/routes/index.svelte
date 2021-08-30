@@ -1,56 +1,50 @@
-<svelte:head>
-	<title>Assemblies</title>
-</svelte:head>
+<h1>Welcome to votes</h1>
 
-<h1>Welcome!</h1>
-
-<h2>Functionality</h2>
 <ul>
-	<li>
-		<h3>Assembly management</h3>
-		<ul>
-			<li>Admin creates a new assembly</li>
-			<li>People can go to unique assembly link</li>
-			<li>People fill in their details (name, email)</li>
-			<li>Admin allows people in</li>
-			<li>Admin removes people</li>
-		</ul>
-	</li>
-	<li>
-		<h3>Admin creates a poll</h3>
-		<ul>
-			<li>People can poll</li>
-			<li>When all people polld, poll closes</li>
-			<li>Or, when admin closes poll</li>
-			<li>Who polld will be streamed to everyone</li>
-			<li>When poll is closed, results will be distributed.</li>
-		</ul>
-	</li>
+  <li>Setup caddy synch</li>
+  <li>Setup login link</li>
+  <li>Create backend</li>
+  <li>Reconnection strategy</li>
 </ul>
 
-<h2>Screens</h2>
-<ul>
-	<li>Welcome</li>
-	<li>Create user</li>
-	<li>[user] Assembly overview</li>
-	<li>[admin] Assembly overview</li>
-	<li>[admin] poll creation</li>
-	<li>[user] poll screen</li>
-</ul>
+<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
 
-<style>
-	h1 {
-		text-align: center;
-		margin: 0 auto;
-		font-size: 2.8em;
-		text-transform: uppercase;
-		font-weight: 700;
-		margin: 0 0 0.5em 0;
-	}
 
-	@media (min-width: 480px) {
-		h1 {
-			font-size: 4em;
-		}
-	}
-</style>
+<script>
+  import { onMount } from 'svelte'
+
+  onMount(async () => {
+
+    await fetch('http://app.wolbodo/auth/mercure')
+    // The subscriber subscribes to updates for the https://example.com/users/dunglas topic
+    // and to any topic matching https://example.com/books/{id}
+    const url = new URL('http://mercure.wolbodo/.well-known/mercure');
+    url.searchParams.append('topic', 'http://votes.wolbodo/member');
+    // The URL class is a convenient way to generate URLs such as https://localhost/.well-known/mercure?topic=https://example.com/books/{id}&topic=https://example.com/users/dunglas
+
+    const eventSource = new EventSource(url, { withCredentials: true });
+
+    eventSource.addEventListener("notice", function(e) {
+      console.log(e.data)
+    })
+
+    /* Similarly, this will listen for events
+    * with the field `event: update`
+    */
+    eventSource.addEventListener("update", function(e) {
+      console.log(e.data)
+    })
+
+    /* The event "message" is a special case, as it
+    * will capture events without an event field
+    * as well as events that have the specific type
+    * `event: message` It will not trigger on any
+    * other event type.
+    */
+    eventSource.addEventListener("message", function(e) {
+      console.log(e.data)
+    })
+
+    return () => eventSource.close()
+  })
+</script>
