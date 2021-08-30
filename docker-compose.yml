@@ -25,6 +25,7 @@ services:
     environment:
       CERT_NAME: wildcard
       VIRTUAL_HOST: mercure.wolbodo.nl
+      SERVER_NAME: 'mercure.wolbodo.nl:80'
 
       MERCURE_PUBLISHER_JWT_KEY: '!ChangeMe!'
       MERCURE_SUBSCRIBER_JWT_KEY: '!ChangeMe!'
