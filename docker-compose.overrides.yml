@@ -1,7 +1,7 @@
 networks:
   default:
     external:
-      name: proxy_default
+      name: wolbodo
 
 services:
   votes:
