@@ -1,6 +1,5 @@
 networks:
-  default: null
-  proxy:
+  default:
     external:
       name: proxy_default
 
