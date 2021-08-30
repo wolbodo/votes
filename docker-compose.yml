@@ -1,7 +1,8 @@
 networks:
-  default:
+  default: null
+  proxy:
     external:
-      name: proxy_default
+      name: wolbodo
 
 services:
   votes:
@@ -29,7 +30,7 @@ services:
       MERCURE_PUBLISHER_JWT_KEY: '!ChangeMe!'
       MERCURE_SUBSCRIBER_JWT_KEY: '!ChangeMe!'
       MERCURE_EXTRA_DIRECTIVES: |
-        cors_origins http://votes.wolbodo/ https://votes.wolbodo.nl
+        cors_origins http://votes.votes_default https://votes.wolbodo.nl
         anonymous
         demo
     volumes:
