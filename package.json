@@ -1,5 +1,5 @@
 {
-  "name": "~TODO~",
+  "name": "votes",
   "version": "0.0.1",
   "scripts": {
     "dev": "svelte-kit dev",
@@ -7,11 +7,14 @@
     "preview": "svelte-kit preview"
   },
   "devDependencies": {
+    "@sveltejs/adapter-node": "^1.0.0-next.43",
     "@sveltejs/kit": "next",
     "svelte": "^3.34.0"
   },
   "type": "module",
   "dependencies": {
+    "@fontsource/alice": "^4.5.0",
+    "@fontsource/rubik": "^4.5.0",
     "jsonwebtoken": "^8.5.1"
   }
 }

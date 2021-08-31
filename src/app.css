@@ -1,0 +1,52 @@
+@import "@fontsource/alice";
+@import "@fontsource/rubik";
+
+body {
+  --black: #050505;
+  --dark-gray: #242525;
+  --gray: #393b3a;
+  --light-gray: #9ca19f;
+  --white: #DDE3E0;
+  --blue: #161932;
+  --light-yellow: #f5e1a1;
+  --yellow: #EEC643;
+  --red: #AD343E;
+
+  font-family: "Alice";
+  font-size: 16px;
+  background: var(--black);
+  color: var(--white);
+}
+
+button, input {
+  font-family: "Rubik";
+  font-size: 16px;
+  padding: .5rem;
+  margin: 0 0.2rem;
+  border-radius: .3rem;
+  background: var(--dark-gray);
+  border: var(--gray);
+  color: var(--white);
+}
+button {
+  text-transform: uppercase;
+  color: var(--light-yellow);
+}
+button[type=submit] {
+  background-color: var(--blue);
+}
+input:focus {
+  outline: 2px solid var(--yellow);
+}
+
+article {
+  background: var(--gray);
+  padding: .5rem;
+  margin: .5rem;
+}
+article h2:first-child {
+  margin-top: 0;
+}
+article :last-child {
+  margin-bottom: 0;
+}

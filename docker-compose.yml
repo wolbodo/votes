@@ -12,8 +12,7 @@ services:
       dockerfile: Dockerfile.dev
     environment:
       CERT_NAME: wildcard
-      VIRTUAL_HOST: votes.wolbodo.nl
-
+      VIRTUAL_HOST: vote.wolbodo.nl
     volumes:
       - ./:/usr/src/app
       - /usr/src/app/node_modules
@@ -29,9 +28,9 @@ services:
       MERCURE_PUBLISHER_JWT_KEY: '!ChangeMe!'
       MERCURE_SUBSCRIBER_JWT_KEY: '!ChangeMe!'
       MERCURE_EXTRA_DIRECTIVES: |
-        cors_origins http://votes.wolbodo https://votes.wolbodo.nl
-        anonymous
-        demo
+        cors_origins http://vote.wolbodo https://vote.wolbodo.nl
+        ui
+        subscriptions
     volumes:
       - mercure_data:/data
       - mercure_config:/config
