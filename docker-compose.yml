@@ -10,7 +10,7 @@ services:
     environment:
       MERCURE_JWT_SECRET: $MERCURE_JWT_SECRET
       CERT_NAME: wildcard
-      VIRTUAL_HOST: vote.wolbodo.nl
+      VIRTUAL_HOST: vote.wolbodo.nl,votes.wolbodo.nl
 
   mercure:
     image: dunglas/mercure
