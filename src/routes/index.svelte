@@ -61,14 +61,18 @@
       }
     })
   }
+  let eventSource
 
-  onMount(async () => {
-    await fetch('https://members.wolbodo.nl/auth/mercure', { credentials: 'include' })
-  
+  function openEventSource() {
+
     const url = new URL('https://mercure.wolbodo.nl/.well-known/mercure');
     url.searchParams.append('topic', TOPIC);
+    
+    if (eventSource) {
+      eventSource.close()
+    }
 
-    const eventSource = new EventSource(url, { withCredentials: true });
+    eventSource = new EventSource(url, { withCredentials: true });
 
     eventSource.addEventListener("message", function(e) {
       const data = JSON.parse(e.data)
@@ -77,6 +81,17 @@
         setState(data.state)
       }
     })
+    eventSource.addEventListener('error', e => {
+      console.error('retrying eventsource, error: ', e)
+      setTimeout(() => openEventSource(), 500)
+    })
+  }
+
+
+  onMount(async () => {
+    await fetch('https://members.wolbodo.nl/auth/mercure', { credentials: 'include' })
+  
+    openEventSource()
 
     // Load all existing options`
     {
