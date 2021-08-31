@@ -20,8 +20,8 @@ services:
       VIRTUAL_HOST: mercure.wolbodo.nl
       SERVER_NAME: 'mercure.wolbodo.nl:80'
 
-      MERCURE_PUBLISHER_JWT_KEY: '!ChangeMe!'
-      MERCURE_SUBSCRIBER_JWT_KEY: '!ChangeMe!'
+      MERCURE_PUBLISHER_JWT_KEY: $MERCURE_JWT_SECRET
+      MERCURE_SUBSCRIBER_JWT_KEY: $MERCURE_JWT_SECRET
       MERCURE_EXTRA_DIRECTIVES: |
         cors_origins http://vote.wolbodo https://vote.wolbodo.nl
         ui
