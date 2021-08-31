@@ -5,17 +5,11 @@ networks:
 
 services:
   votes:
-    image: client
-    restart: on-failure
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
+    image: wolbodo/votes:latest
+    restart: unless-stopped
     environment:
       CERT_NAME: wildcard
       VIRTUAL_HOST: vote.wolbodo.nl
-    volumes:
-      - ./:/usr/src/app
-      - /usr/src/app/node_modules
 
   mercure:
     image: dunglas/mercure
