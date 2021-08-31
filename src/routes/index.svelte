@@ -65,26 +65,32 @@
 
   function openEventSource() {
 
-    const url = new URL('https://mercure.wolbodo.nl/.well-known/mercure');
-    url.searchParams.append('topic', TOPIC);
-    
-    if (eventSource) {
-      eventSource.close()
-    }
+    try {
 
-    eventSource = new EventSource(url, { withCredentials: true });
-
-    eventSource.addEventListener("message", function(e) {
-      const data = JSON.parse(e.data)
-
-      if (data['@context'] === 'https://vote.wolbodo.nl/') {
-        setState(data.state)
+      const url = new URL('https://mercure.wolbodo.nl/.well-known/mercure');
+      url.searchParams.append('topic', TOPIC);
+      
+      if (eventSource) {
+        eventSource.close()
       }
-    })
-    eventSource.addEventListener('error', e => {
-      console.error('retrying eventsource, error: ', e)
+
+      eventSource = new EventSource(url, { withCredentials: true });
+
+      eventSource.addEventListener("message", function(e) {
+        const data = JSON.parse(e.data)
+
+        if (data['@context'] === 'https://vote.wolbodo.nl/') {
+          setState(data.state)
+        }
+      })
+      eventSource.addEventListener('error', e => {
+        console.error('retrying eventsource, error: ', e)
+        setTimeout(() => openEventSource(), 500)
+      })
+    } catch (e) {
+      console.error("Catching error:", e)
       setTimeout(() => openEventSource(), 500)
-    })
+    }
   }
 
 
