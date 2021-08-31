@@ -1,56 +1,187 @@
-<svelte:head>
-	<title>Assemblies</title>
-</svelte:head>
+<script>
+	import '../app.css';
+  import { onMount } from 'svelte'
 
-<h1>Welcome!</h1>
+  import { default as UserList, voting } from '$lib/UserList.svelte'
+  import Vote from '$lib/Vote.svelte'
+  import Votes from '$lib/Votes.svelte'
 
-<h2>Functionality</h2>
-<ul>
-	<li>
-		<h3>Assembly management</h3>
-		<ul>
-			<li>Admin creates a new assembly</li>
-			<li>People can go to unique assembly link</li>
-			<li>People fill in their details (name, email)</li>
-			<li>Admin allows people in</li>
-			<li>Admin removes people</li>
-		</ul>
-	</li>
-	<li>
-		<h3>Admin creates a poll</h3>
-		<ul>
-			<li>People can poll</li>
-			<li>When all people polld, poll closes</li>
-			<li>Or, when admin closes poll</li>
-			<li>Who polld will be streamed to everyone</li>
-			<li>When poll is closed, results will be distributed.</li>
-		</ul>
-	</li>
-</ul>
+  let options = {}
+  let user
 
-<h2>Screens</h2>
-<ul>
-	<li>Welcome</li>
-	<li>Create user</li>
-	<li>[user] Assembly overview</li>
-	<li>[admin] Assembly overview</li>
-	<li>[admin] poll creation</li>
-	<li>[user] poll screen</li>
-</ul>
+  // State
+  let currentVote
+  let subject = ''
+  let newOption = ''
+  let pastVotes = []
 
+  const TOPIC = 'https://votes.wolbodo.nl/state.json'
+
+  $: isBoard = user?.roles.includes('board')
+
+  function slugify(text) {
+    return text
+      .toString()                     // Cast to string
+      .toLowerCase()                  // Convert the string to lowercase letters
+      .normalize('NFD')       // The normalize() method returns the Unicode Normalization Form of a given string.
+      .trim()                         // Remove whitespace from both sides of a string
+      .replace(/\s+/g, '-')           // Replace spaces with -
+      .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+      .replace(/\-\-+/g, '-');        // Replace multiple - with single -
+  }
+  function setState(state) {
+    currentVote = state.currentVote
+    pastVotes = state.pastVotes
+    subject = state.subject
+    options = state.options
+
+    if (currentVote) {
+      $voting = currentVote.users
+    } else {
+      $voting = null
+    }
+  }
+
+  function setOption(slug, value) {
+    fetch(`/option/${slug}`, {
+      method: 'PATCH',
+      body: JSON.stringify(value),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+  }
+
+  function setSubject(subject) {
+    fetch(`/subject`, {
+      method: 'POST',
+      body: JSON.stringify(subject),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+  }
+
+  onMount(async () => {
+    await fetch('https://members.wolbodo.nl/auth/mercure', { credentials: 'include' })
+  
+    const url = new URL('https://mercure.wolbodo.nl/.well-known/mercure');
+    url.searchParams.append('topic', TOPIC);
+
+    const eventSource = new EventSource(url, { withCredentials: true });
+
+    eventSource.addEventListener("message", function(e) {
+      const data = JSON.parse(e.data)
+
+      if (data['@context'] === 'https://votes.wolbodo.nl/') {
+        setState(data.state)
+      }
+    })
+
+    // Load all existing options`
+    {
+      const response = await fetch(`https://votes.wolbodo.nl/state.json`)
+      const state = await response.json()
+      setState(state)
+    }
+
+    // Load the user
+    {
+      const response = await fetch('https://members.wolbodo.nl/auth/me', { credentials: 'include' })
+      user = await response.json()
+    }
+
+    return () => eventSource.close()
+  })
+</script>
+
+<h1>Wolbodo votes</h1>
+
+<UserList />
+
+{#if !currentVote}
+  <article class='upcoming'>
+    <h2>
+      Upcoming:
+      {#if isBoard}
+        <input id='subject' value={subject} on:change={({ target }) => setSubject(target.value)} />
+      {:else}
+        {subject}
+      {/if}
+    </h2>
+
+    {#if isBoard}
+      <form on:submit|preventDefault={() => {
+        setOption(slugify(newOption), newOption)
+        newOption = ''
+      }}>
+        <label for='newOption'>New option:</label>
+        <input id='newOption' bind:value={newOption} />
+        <button>Add</button>
+      </form>
+    {/if}
+
+    <ul class='options'>
+      {#each Object.entries(options) as [slug, value]} 
+        <li>
+          {#if isBoard}
+            <input
+              on:change={({ target }) => setOption(slug, target.value)}
+              {value}
+            />
+            <button on:click={() => fetch(`/option/${slug}`, { method: 'DELETE' })}>Remove</button>
+          {:else}
+            <span class='option'>
+              {value}
+            </span>
+          {/if}
+        </li>
+      {/each}
+    </ul>
+
+    {#if isBoard}
+      <section>
+        <button on:click={() => fetch('/startVote')}>Start</button>
+      </section>
+    {/if}
+  </article>
+{:else if currentVote.users.includes(user?.name)}
+  <Vote {...currentVote} />
+{:else}
+  <article>
+    <h2>It's still going</h2>
+    <p>Please wait for the vote to finish</p>
+    
+    {#if isBoard}
+      <button on:click={() => fetch('/endVote')}>End vote</button>
+    {/if}
+  </article>
+{/if}
+
+<Votes votes={[...pastVotes].reverse()} />
+  
 <style>
-	h1 {
-		text-align: center;
-		margin: 0 auto;
-		font-size: 2.8em;
-		text-transform: uppercase;
-		font-weight: 700;
-		margin: 0 0 0.5em 0;
-	}
+  h1 {
+    background: var(--blue);
+    margin: -.5rem;
+    margin-bottom: .5rem;
+    padding: .5rem 1.5rem;
+  }
 
-	@media (min-width: 480px) {
-		h1 {
-			font-size: 4em;
-		}
-	}
+  .upcoming .options {
+    list-style: none;
+    padding: 0;
+  }
+  .upcoming .option {
+    padding: .5rem;
+    margin: 0.2rem;
+    border-radius: .3rem;
+    background: var(--dark-gray);
+    border: var(--gray);
+    color: var(--white);
+    display: inline-block;
+  }
+  .upcoming .options li+li {
+    margin-top: .2rem;
+  }
 </style>

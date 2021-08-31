@@ -1,17 +1,12 @@
-
 FROM node:alpine
+
+COPY build /app
 
 WORKDIR /app
 
-ADD package.json yarn.lock /app/
+COPY package.json /app
+COPY package-lock.json /app
 
-RUN yarn install --prod --pure-lockfile && yarn cache clean
+RUN npm ci
 
-ADD . /app/
-
-EXPOSE 80/tcp
-
-ENV PORT 80
-ENV NODE_ENV 'production'
-
-CMD ["node", "__sapper__/build"]
+CMD ["node", "."]
