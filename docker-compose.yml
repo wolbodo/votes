@@ -8,6 +8,7 @@ services:
     image: wolbodo/votes:latest
     restart: unless-stopped
     environment:
+      MERCURE_JWT_SECRET: $MERCURE_JWT_SECRET
       CERT_NAME: wildcard
       VIRTUAL_HOST: vote.wolbodo.nl
 
