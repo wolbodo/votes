@@ -14,7 +14,7 @@ export function setSubject(sub) {
 
 
 const MERCURE_JWT_SECRET = process.env['MERCURE_JWT_SECRET'] || '!ChangeMe!'
-const TOPIC = 'https://votes.wolbodo.nl/state.json'
+const TOPIC = 'https://vote.wolbodo.nl/state.json'
 
 function createToken() {
 	return jwt.sign({
@@ -60,7 +60,7 @@ export function updateUsers() {
         'topic': TOPIC,
         'private': 'on',
         'data': JSON.stringify({
-					'@context': 'https://votes.wolbodo.nl/',
+					'@context': 'https://vote.wolbodo.nl/',
 					state: currentState()
 				})
     })

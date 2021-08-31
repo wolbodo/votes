@@ -15,7 +15,7 @@
   let newOption = ''
   let pastVotes = []
 
-  const TOPIC = 'https://votes.wolbodo.nl/state.json'
+  const TOPIC = 'https://vote.wolbodo.nl/state.json'
 
   $: isBoard = user?.roles.includes('board')
 
@@ -73,14 +73,14 @@
     eventSource.addEventListener("message", function(e) {
       const data = JSON.parse(e.data)
 
-      if (data['@context'] === 'https://votes.wolbodo.nl/') {
+      if (data['@context'] === 'https://vote.wolbodo.nl/') {
         setState(data.state)
       }
     })
 
     // Load all existing options`
     {
-      const response = await fetch(`https://votes.wolbodo.nl/state.json`)
+      const response = await fetch(`https://vote.wolbodo.nl/state.json`)
       const state = await response.json()
       setState(state)
     }
