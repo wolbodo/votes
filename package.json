@@ -14,6 +14,7 @@
   "type": "module",
   "dependencies": {
     "@fontsource/alice": "^4.5.0",
+    "@fontsource/righteous": "^4.4.5",
     "@fontsource/rubik": "^4.5.0",
     "jsonwebtoken": "^8.5.1"
   }

@@ -1,7 +1,12 @@
 @import "@fontsource/alice";
 @import "@fontsource/rubik";
+@import '@fontsource/righteous';
 
-body {
+:root {
+	/* --font: "Alice", 'Open Sans', 'Helvetica Neue', sans-serif; */
+	--font: "Rubik", 'Open Sans', 'Helvetica Neue', sans-serif;
+	--font-heading: "Righteous";
+
   --black: #050505;
   --dark-gray: #242525;
   --gray: #393b3a;
@@ -11,11 +16,17 @@ body {
   --light-yellow: #f5e1a1;
   --yellow: #EEC643;
   --red: #AD343E;
+}
 
-  font-family: "Alice";
+body {
+  font-family: var(--font);
   font-size: 16px;
   background: var(--black);
   color: var(--white);
+}
+
+h1, h2, h3, h4, h5, h6 {
+	font-family: var(--font-heading);
 }
 
 a {
