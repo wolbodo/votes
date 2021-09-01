@@ -5,6 +5,7 @@
   import { default as UserList, voting } from '$lib/UserList.svelte'
   import Vote from '$lib/Vote.svelte'
   import Votes from '$lib/Votes.svelte'
+  import Header from '$lib/Header.svelte'
 
   let options = {}
   let user
@@ -116,10 +117,7 @@
   })
 </script>
 
-<nav>
-  <h1>Wolbodo votes</h1>
-  <a class='button' href='https://members.wolbodo.nl/logout'>Logout</a>
-</nav>
+<Header />
 
 <UserList />
 
@@ -185,16 +183,6 @@
 <Votes votes={[...pastVotes].reverse()} />
   
 <style>
-  nav {
-    background: var(--blue);
-    margin: -.5rem;
-    margin-bottom: .5rem;
-    padding: .5rem 1.5rem;
-
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
 
   .upcoming .options {
     list-style: none;
