@@ -6,7 +6,8 @@
 <script>
   import { onMount } from 'svelte'
   let users = new Map()
-  const TOPIC = 'https://vote.wolbodo.nl/state.json'
+  const TOPIC = 'https://vote
+  .wolbodo.nl/state.json'
 
   onMount(async () => {
 
@@ -77,9 +78,9 @@
 
   li {
     background: var(--gray);
-    padding: 2px;
-    margin: 2px 4px;
-    border-radius: 2px;
+    padding: .5rem;
+    margin: .2rem;
+    border-radius: .3rem;
     color: var(--light-gray);
     list-style: person inside;
   }
