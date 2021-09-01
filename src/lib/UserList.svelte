@@ -6,8 +6,8 @@
 <script>
   import { onMount } from 'svelte'
   let users = new Map()
-  const TOPIC = 'https://vote
-  .wolbodo.nl/state.json'
+  const TOPIC = 'https://vote.wolbodo.nl/state.json'
+  
 
   onMount(async () => {
 
