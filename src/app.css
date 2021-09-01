@@ -18,7 +18,12 @@ body {
   color: var(--white);
 }
 
-button, input {
+a {
+  color: var(--white);
+  text-decoration: none;
+}
+
+button, input, .button {
   font-family: "Rubik";
   font-size: 16px;
   padding: .5rem;

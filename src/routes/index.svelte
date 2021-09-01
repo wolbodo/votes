@@ -63,9 +63,11 @@
   }
   let eventSource
 
-  function openEventSource() {
+  async function openEventSource() {
+    console.log("Fetching credentials")
 
     try {
+      await fetch('https://members.wolbodo.nl/auth/mercure', { credentials: 'include' })
 
       const url = new URL('https://mercure.wolbodo.nl/.well-known/mercure');
       url.searchParams.append('topic', TOPIC);
@@ -94,10 +96,8 @@
   }
 
 
-  onMount(async () => {
-    await fetch('https://members.wolbodo.nl/auth/mercure', { credentials: 'include' })
-  
-    openEventSource()
+  onMount(async () => {  
+    await openEventSource()
 
     // Load all existing options`
     {
@@ -116,7 +116,10 @@
   })
 </script>
 
-<h1>Wolbodo votes</h1>
+<nav>
+  <h1>Wolbodo votes</h1>
+  <a class='button' href='https://members.wolbodo.nl/logout'>Logout</a>
+</nav>
 
 <UserList />
 
@@ -182,11 +185,15 @@
 <Votes votes={[...pastVotes].reverse()} />
   
 <style>
-  h1 {
+  nav {
     background: var(--blue);
     margin: -.5rem;
     margin-bottom: .5rem;
     padding: .5rem 1.5rem;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
 
   .upcoming .options {
