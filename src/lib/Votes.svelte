@@ -11,7 +11,7 @@
         <h3>{vote.subject}</h3>
 
         <h4>Present:</h4>
-        <ul>
+        <ul class='present'>
           {#each vote.users as user}
             <li>{user}</li>
           {/each}
@@ -43,12 +43,12 @@
   .vote h3 {
     margin-top: 0;
   }
-  .votes {
+  ul {
     list-style: none;
     display: flex;
     flex-wrap: wrap;
   }
-  .votes li {
+  ul li {
     padding: .5rem;
     margin: 0.2rem;
     border-radius: .3rem;
