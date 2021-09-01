@@ -40,7 +40,7 @@ button {
 button[type=submit] {
   background-color: var(--blue);
 }
-input:focus {
+input:focus, button:focus {
   outline: 2px solid var(--yellow);
 }
 
