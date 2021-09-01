@@ -44,6 +44,8 @@
   }
 
   function setOption(slug, value) {
+    if (!slug.length) return
+    
     fetch(`/option/${slug}`, {
       method: 'PATCH',
       body: JSON.stringify(value),

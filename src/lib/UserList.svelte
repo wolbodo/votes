@@ -82,10 +82,11 @@
     margin: .2rem;
     border-radius: .3rem;
     color: var(--light-gray);
+    border: 2px solid transparent;
     list-style: person inside;
   }
   li.active {
-    outline: 2px solid var(--yellow);
+    border: 2px solid var(--yellow);
     background: transparent;
     color: var(--white);
   }
@@ -93,7 +94,7 @@
     list-style: board inside;
   }
   .voting li.voting {
-    outline: 2px solid var(--red);
+    border: 2px solid var(--red);
     list-style: waiting inside;
   }
 </style>
