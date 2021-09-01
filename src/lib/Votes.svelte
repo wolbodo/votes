@@ -43,10 +43,16 @@
   .vote h3 {
     margin-top: 0;
   }
+
+  h4 {
+    margin-bottom: 0;
+  }
   ul {
     list-style: none;
     display: flex;
     flex-wrap: wrap;
+    padding: 1rem;
+    margin: 0;
   }
   ul li {
     padding: .5rem;
