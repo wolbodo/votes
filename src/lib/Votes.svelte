@@ -45,13 +45,13 @@
   }
 
   h4 {
-    margin-bottom: 0;
+    margin: 0;
   }
   ul {
     list-style: none;
     display: flex;
     flex-wrap: wrap;
-    padding: 1rem;
+    padding: .5rem;
     margin: 0;
   }
   ul li {
